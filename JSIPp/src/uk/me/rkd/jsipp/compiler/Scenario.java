@@ -3,24 +3,19 @@
  */
 package uk.me.rkd.jsipp.compiler;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
+import uk.me.rkd.jsipp.runtime.Call;
 
 /**
  * @author robertday
@@ -30,6 +25,10 @@ public class Scenario {
 	private final List<CallPhase> actions;
 	private Scenario(List<CallPhase> a) {
 		this.actions = a;
+	}
+	
+	public List<CallPhase> phases() {
+		return Collections.unmodifiableList(this.actions);
 	}
 	/**
 	 * @return A Scenario object based on the XML file.
@@ -47,23 +46,5 @@ public class Scenario {
 			}
 		}
 		return new Scenario(actions);
-	}
-	
-	public static void main (String argv[]) throws ParserConfigurationException, SAXException, IOException {
-		File fXmlFile = new File("/Users/robertday/uas.xml");
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		dbFactory.setValidating(false);
-		dbFactory.setNamespaceAware(true);
-		dbFactory.setFeature("http://xml.org/sax/features/namespaces", false);
-		dbFactory.setFeature("http://xml.org/sax/features/validation", false);
-		dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-		dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-		dbFactory.setIgnoringElementContentWhitespace(true);
-		dbFactory.setIgnoringComments(true);
-		dbFactory.setCoalescing(true);
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-		Document doc = dBuilder.parse(fXmlFile);
-		//doc.getDocumentElement().normalize();
-		Scenario.fromXMLFile(doc);
 	}
 }

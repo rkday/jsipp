@@ -1,7 +1,8 @@
 package uk.me.rkd.jsipp.compiler.phases;
 
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
-public abstract class CallPhase {
+public abstract class CallPhase {	
 
 }
