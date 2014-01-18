@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 
 public class KeywordReplacer {
 	private static final Pattern keywordPattern = Pattern.compile("\\[(.+?):?\\]");
+	private static final String wholeLinePattern = "\\[last_.+?\\].*?\r\n";
+
 	
 	public static String replaceKeywords(String text,
 			Map<String, String> variables,
@@ -20,7 +22,9 @@ public class KeywordReplacer {
 			String replacement = variables.get(keyword);
 			position = m.end();
 			if (replacement != null) {
-				result = result.replace(m.group(), replacement);
+				result = result.replace(keywordBlock, replacement);
+			} else if (keyword.startsWith("last_")) {
+				result = result.replaceFirst(wholeLinePattern, "\r\n");
 			} else if (mustMatchAll) {
 				throw new IllegalStateException();
 			}
