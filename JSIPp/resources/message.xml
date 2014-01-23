@@ -24,14 +24,16 @@
   <!-- are saved and used for following messages sent. Useful to test   -->
   <!-- against stateful SIP proxies/B2BUAs.                             -->
 
-  <send><![CDATA[MESSAGE sip:a@example.com SIP/2.0
-Via: SIP/2.0/udp localhost;branch=branch
-From: sipp <sip:sipp@localhost>;tag=SIPpTag00
-To: service <sip:service@localhost>
-CSeq: 1 MESSAGE
-Call-ID: [call_id]
-Contact: <sip:b@example.com>
-Content-Length: 0
+  <send>
+  	<![CDATA[
+  	MESSAGE sip:a@example.com SIP/2.0
+	Via: SIP/2.0/udp localhost;branch=branch
+	From: sipp <sip:sipp@localhost>;tag=SIPpTag00
+	To: service <sip:service@localhost>
+	CSeq: 1 MESSAGE
+	Call-ID: [call_id]
+	Contact: <sip:b@example.com>
+	Content-Length: 0
     ]]>
   </send>
 
