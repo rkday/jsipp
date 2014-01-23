@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>JSIPp</groupId>
   <artifactId>JSIPp</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
@@ -37,4 +37,10 @@
   		</dependency>
   	</dependencies>
   </dependencyManagement>
+  <scm>
+  	<url>https://github.com/rkday/jsipp/</url>
+  </scm>
+  <url>https://github.com/rkday/jsipp/</url>
+  <name>JSIPp</name>
+  <description>SIPp, rewritten in Java.</description>
 </project>
