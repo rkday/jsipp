@@ -13,11 +13,13 @@ public class CallOpeningTask implements TimerTask {
 	private int callNum = 0;
 	private Timeout handle;
 	private long start;
+	private double rate;
 	
-	public CallOpeningTask(Scenario scenario, SocketManager socketManager) {
+	public CallOpeningTask(Scenario scenario, SocketManager socketManager, double rate) {
 		this.scenario = scenario;
 		this.start = System.currentTimeMillis();
 		this.socketManager = socketManager;
+		this.rate = rate;
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -28,10 +30,11 @@ public class CallOpeningTask implements TimerTask {
 	@Override
 	public synchronized void run(Timeout timeout) throws Exception {
 		long runtime = System.currentTimeMillis() - this.start;
-		long expectedCalls = runtime * 2;
+		double msPerCall = (this.rate / 1000.0);
+		long expectedCalls = (long) (runtime * msPerCall);
 		long callstoStart = expectedCalls - this.callNum;
 		this.handle = timeout;
-		timeout.timer().newTimeout(this, 50, TimeUnit.MILLISECONDS);
+		timeout.timer().newTimeout(this, (long) msPerCall, TimeUnit.MILLISECONDS);
 		for (int i = 0; i < callstoStart; i++) {
 			Call call = new Call(this.callNum, this.scenario.phases(), this.socketManager);
 			call.registerSocket();

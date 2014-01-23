@@ -10,6 +10,14 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -24,34 +32,45 @@ public class JSIPpMain {
 	public JSIPpMain() {
 		// TODO Auto-generated constructor stub
 	}
+	
+	private static Options createOptions() {
+		Options opts = new Options();
+		Option help = new Option("h", "display help text");
+		Option scenarioFile = OptionBuilder.withArgName( "file" )
+				.hasArg()
+                .withDescription(  "The XML file defining the SIPp scenario" )
+                .create( "sf" );
+		Option rate = OptionBuilder.withArgName( "rate" )
+				.hasArg()
+                .withDescription(  "The number of new calls to be created per second (default 1)" )
+                .create( "r" );
+		opts.addOption(help);
+		opts.addOption(scenarioFile);
+		opts.addOption(rate);
+		return opts;
+	}
 
-	public static void main (String argv[]) throws ParserConfigurationException, SAXException, IOException, InterruptedException {
-		File fXmlFile = new File("/Users/robertday/message.xml");
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		dbFactory.setValidating(false);
-		dbFactory.setNamespaceAware(true);
-		dbFactory.setFeature("http://xml.org/sax/features/namespaces", false);
-		dbFactory.setFeature("http://xml.org/sax/features/validation", false);
-		dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-		dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-		dbFactory.setIgnoringElementContentWhitespace(true);
-		dbFactory.setIgnoringComments(true);
-		dbFactory.setCoalescing(true);
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-		Document doc = dBuilder.parse(fXmlFile);
-		//doc.getDocumentElement().normalize();
-		Scenario scenario = Scenario.fromXMLFile(doc);
-		System.out.println("Scenario created");
+	public static void main (String argv[]) throws ParserConfigurationException, SAXException, IOException, InterruptedException, ParseException {
+		CommandLineParser parser = new BasicParser();
+		CommandLine cmd = parser.parse( createOptions(), argv);
+		if (cmd.hasOption("h") || (cmd.getArgList().size() != 1)) {
+			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", createOptions());
+			return;
+		}
+		Configuration cfg = Configuration.createFromOptions(cmd);
+		Scenario scenario = Scenario.fromXMLFilename(cfg.getScenarioFile());
 		Scheduler sched = new Scheduler(50);
-		System.out.println("Scheduler created");
-		SocketManager sm = new UDPMultiSocketManager("localhost", 5060);
-		System.out.println("Socket manager created");
-		CallOpeningTask opentask = new CallOpeningTask(scenario, sm);
+		SocketManager sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+		CallOpeningTask opentask = new CallOpeningTask(scenario, sm, cfg.getRate());
+
 		sched.add(opentask, 10);
-		System.out.println("Call generation task started");
-		Thread.sleep(180000);
+		Thread.sleep(5 * 60 * 1000);
+		
 		opentask.stop();
+		
+		// Wait for a second so all the calls finish
 		Thread.sleep(1000);
+		
 		sm.stop();
 		sched.stop();
 		System.out.println("fin");
