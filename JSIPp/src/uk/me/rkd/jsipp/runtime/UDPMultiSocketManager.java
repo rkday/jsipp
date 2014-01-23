@@ -26,18 +26,19 @@ public class UDPMultiSocketManager extends SocketManager {
 	private Thread readerThread;
 	Queue<SelectionKey> deadKeyQueue;
 	Queue<CallAndChan> newCallQueue;
-	
+
 	private class CallAndChan {
 		public Call call;
 		public DatagramChannel chan;
-		
+
 		public CallAndChan(Call call, DatagramChannel chan) {
 			this.call = call;
 			this.chan = chan;
 		}
 	}
-	
-	public UDPMultiSocketManager(String defaultHost, int defaultPort) throws IOException {
+
+	public UDPMultiSocketManager(String defaultHost, int defaultPort)
+			throws IOException {
 		this.defaultTarget = new InetSocketAddress(defaultHost, defaultPort);
 		this.selector = Selector.open();
 		this.callNumToSocket = new HashMap<Integer, SelectionKey>();
@@ -47,7 +48,7 @@ public class UDPMultiSocketManager extends SocketManager {
 		this.newCallQueue = new ConcurrentLinkedQueue<CallAndChan>();
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	@Override
 	public void stop() throws IOException {
 		this.readerThread.interrupt();
@@ -57,22 +58,26 @@ public class UDPMultiSocketManager extends SocketManager {
 	private class SelectorThread extends Thread {
 		public void run() {
 			int available = 0;
-			while (!this.isInterrupted() && UDPMultiSocketManager.this.selector.isOpen()) {
+			while (!this.isInterrupted()
+					&& UDPMultiSocketManager.this.selector.isOpen()) {
 				try {
 					available = UDPMultiSocketManager.this.selector.select();
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
-					System.out.println("Selector is closed, terminating thread");
+					System.out
+							.println("Selector is closed, terminating thread");
 					break;
 				}
 				if (available > 0) {
 					int processed = 0;
-					Iterator<SelectionKey> keyIterator = UDPMultiSocketManager.this.selector.selectedKeys().iterator();
+					Iterator<SelectionKey> keyIterator = UDPMultiSocketManager.this.selector
+							.selectedKeys().iterator();
 					while (keyIterator.hasNext()) {
 						processed += 1;
 						SelectionKey key = keyIterator.next();
 						if (key.isReadable()) {
-							DatagramChannel chan = (DatagramChannel) key.channel();
+							DatagramChannel chan = (DatagramChannel) key
+									.channel();
 							Call attachedCall = (Call) key.attachment();
 							ByteBuffer dst = ByteBuffer.allocate(1400);
 							try {
@@ -80,43 +85,69 @@ public class UDPMultiSocketManager extends SocketManager {
 								String message = new String(dst.array());
 								attachedCall.process_incoming(message);
 							} catch (IOException e) {
-								// if the channel isn't actually readable, just skip it
+								// if the channel isn't actually readable, just
+								// skip it
 							}
 						}
 						keyIterator.remove();
 					}
 				}
-				
-				while (!UDPMultiSocketManager.this.deadKeyQueue.isEmpty()) {
-					SelectionKey key = UDPMultiSocketManager.this.deadKeyQueue.poll();
-					key.cancel();
-				}
-				
+
 				while (!UDPMultiSocketManager.this.newCallQueue.isEmpty()) {
-					CallAndChan cnas = UDPMultiSocketManager.this.newCallQueue.poll();					
+					CallAndChan cnas = UDPMultiSocketManager.this.newCallQueue
+							.poll();
 					SelectionKey key;
 					try {
-						key = cnas.chan.register(UDPMultiSocketManager.this.selector, (SelectionKey.OP_READ), cnas.call);
-						UDPMultiSocketManager.this.callNumToSocket.put(new Integer(cnas.call.getNumber()), key);
+						key = cnas.chan.register(
+								UDPMultiSocketManager.this.selector,
+								(SelectionKey.OP_READ), cnas.call);
+						UDPMultiSocketManager.this.callNumToSocket.put(
+								new Integer(cnas.call.getNumber()), key);
 					} catch (ClosedChannelException e) {
-						// Nothing to worry about - if the channel is closed, we won't create the key, so no cleanup is needed,
-						// and we won't ever need to handle any calls coming in from it.
+						// Nothing to worry about - if the channel is closed, we
+						// won't create the key, so no cleanup is needed,
+						// and we won't ever need to handle any calls coming in
+						// from it.
 					}
+				}
+
+				while (!UDPMultiSocketManager.this.deadKeyQueue.isEmpty()) {
+					SelectionKey key = UDPMultiSocketManager.this.deadKeyQueue
+							.poll();
+					key.cancel();
 				}
 			}
 		}
 	}
-	
+
 	@Override
-	public void setdest(Integer callNumber, String host, int port) throws IOException {
+	public void setdest(Integer callNumber, String host, int port)
+			throws IOException {
 		// TODO Auto-generated method stub
-		DatagramChannel chan = (DatagramChannel)this.callNumToSocket.get(callNumber).channel();
+		DatagramChannel chan = (DatagramChannel) this.callNumToSocket.get(
+				callNumber).channel();
 		chan.connect(new InetSocketAddress(host, port));
 	}
 
 	@Override
 	public void send(Integer callNumber, String message) throws IOException {
-		DatagramChannel chan = (DatagramChannel)this.callNumToSocket.get(callNumber).channel();
+		SelectionKey key = this.callNumToSocket.get(callNumber);
+		if (key == null) {
+			// We may (rarely) try and send a message before the selector thread
+			// has created the channel. In this case, sleep for 200ms to let it
+			// catch up, and log and fail if it's still null.
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+			}
+			key = this.callNumToSocket.get(callNumber);
+		}
+		if (key == null) {
+			System.out.println("Attempted to send message for a call with no associated socket");
+			return;
+		}
+		DatagramChannel chan = (DatagramChannel) key.channel();
 		ByteBuffer buf = ByteBuffer.wrap(message.getBytes());
 		chan.write(buf);
 		// TODO Auto-generated method stub
@@ -131,22 +162,22 @@ public class UDPMultiSocketManager extends SocketManager {
 		this.newCallQueue.add(new CallAndChan(call, chan));
 		selector.wakeup();
 	}
-	
+
 	@Override
 	public void remove(Call call) throws IOException {
 		SelectionKey key = this.callNumToSocket.get(call.getNumber());
 		this.callNumToSocket.remove(call.getNumber());
-		DatagramChannel chan = (DatagramChannel)key.channel();
+		DatagramChannel chan = (DatagramChannel) key.channel();
 		try {
 			chan.close();
-			System.out.println("Channel closed");
+			// System.out.println("Channel closed");
 		} catch (IOException e) {
 			System.out.println("IOException");
 			// TODO Auto-generated catch block
-		}	
+		}
 		this.deadKeyQueue.add(key);
 		selector.wakeup();
-		System.out.println("Socket removed");
+		// System.out.println("Socket removed");
 	}
 
 }

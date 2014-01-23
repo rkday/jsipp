@@ -13,7 +13,7 @@ import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 
 public class Call implements TimerTask {
-
+	
 	private final int callNumber;
 	private int phaseIndex = 0;
 	private Map<String, String> callVariables = new HashMap<String, String>();
@@ -22,19 +22,30 @@ public class Call implements TimerTask {
 	private long timeoutEnds;
 	private Timeout currentTimeout;
 	
-	public void setSocketManager(SocketManager sm) {
-		this.sm = sm;
+	// unfinished
+	private class variablesList {
+	
+		String get(String name) {
+			// look in per-call variables
+			// look in global variables
+			// for last_, look in last received message
+			return "";
+		}
+		
+	}
+		
+	public void registerSocket() throws IOException {
+		this.sm.add(this);
 	}
 	
-	public Call(int callNum, List<CallPhase> phases, SocketManager sm) throws IOException {
+	public Call(int callNum, List<CallPhase> phases, SocketManager sm) {
 		// TODO Auto-generated constructor stub
-		//System.out.println("Call created");
 		this.callNumber = callNum;
 		this.callVariables.put("call_num", Integer.toString(callNum));
 		this.callVariables.put("call_id", Integer.toString(callNum));
 		this.phases = phases;
 		this.sm = sm;
-		sm.add(this);
+		System.out.println("Call " + Integer.toString(callNum) + " created");
 	}
 
 	public void end() {
@@ -45,10 +56,10 @@ public class Call implements TimerTask {
 		}
 	}
 	
-	public void run(Timeout timeout) {
+	public synchronized void run(Timeout timeout) {
 		//System.out.println("Call " + Integer.toString(this.callNumber) + " woken up");
-		if (this.phaseIndex == phases.size()) {
-			System.out.println("Call terminating");
+		if (this.phaseIndex >= this.phases.size()) {
+			System.out.println("Call "  + Integer.toString(this.getNumber()) + " terminating");
 			this.end();
 		} else {
 			CallPhase currentPhase = this.phases.get(this.phaseIndex);
@@ -86,14 +97,14 @@ public class Call implements TimerTask {
 	}
 
 
-	public void process_incoming(String message) {
+	public synchronized void process_incoming(String message) {
 		// TODO Auto-generated method stub
 		CallPhase phase = this.phases.get(this.phaseIndex);
 		if (phase instanceof RecvPhase) {
 			String expected = ((RecvPhase)phase).expected;
 			String firstLine = message.substring(0, message.indexOf("\n"));
 			if (firstLine.contains(expected)) {
-				System.out.println("Successful recv");
+				System.out.println("Call " + Integer.toString(getNumber()) + " received " + expected);
 				this.phaseIndex += 1;
 				this.timeoutEnds = -1;
 				this.run(this.currentTimeout);
