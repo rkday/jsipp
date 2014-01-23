@@ -7,14 +7,12 @@ import java.util.zip.DataFormatException;
 
 import org.w3c.dom.Node;
 
-import uk.me.rkd.jsipp.Message;
-
 /**
  * @author robertday
  *
  */
 public abstract class MessageAction {
-	abstract void perform(Message message);
+	abstract void perform(String message);
 	
 	/**
 	 * @param xmlnode - the XML <action> node representing this action

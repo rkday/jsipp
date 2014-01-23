@@ -3,8 +3,6 @@
  */
 package uk.me.rkd.jsipp.compiler.actions;
 
-import uk.me.rkd.jsipp.Message;
-
 /**
  * @author robertday
  *
@@ -38,7 +36,7 @@ public class RegexpAction extends MessageAction {
 	 * @see uk.me.rkd.jsipp.MessageAction#perform(uk.me.rkd.jsipp.Message)
 	 */
 	@Override
-	void perform(Message message) {
+	void perform(String message) {
 		// TODO Auto-generated method stub
 
 	}
