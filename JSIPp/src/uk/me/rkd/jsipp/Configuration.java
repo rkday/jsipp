@@ -3,6 +3,9 @@ package uk.me.rkd.jsipp;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
 
 public enum Configuration {
 	INSTANCE;
@@ -40,7 +43,7 @@ public enum Configuration {
 	private String scenarioFile;
 	private double rate;
 	
-	static Configuration createFromOptions(CommandLine cmd) {
+	public static Configuration createFromOptions(CommandLine cmd) {
 		String[] hostport = cmd.getArgs()[0].split(":", 2);
 		String host = hostport[0];
 		int port = 5060;
@@ -54,11 +57,20 @@ public enum Configuration {
 		return INSTANCE;
 	}
 	
-	static Configuration createFromDefaults() {
-		INSTANCE.remoteHost = "localhost";
-		INSTANCE.remotePort = 5060;
-		INSTANCE.rate = 2000;
-		INSTANCE.scenarioFile = "resources/message.xml";
-		return INSTANCE;
+	public static Options createOptions() {
+		Options opts = new Options();
+		Option help = new Option("h", "display help text");
+		Option scenarioFile = OptionBuilder.withArgName( "file" )
+				.hasArg()
+                .withDescription(  "The XML file defining the SIPp scenario" )
+                .create( "sf" );
+		Option rate = OptionBuilder.withArgName( "rate" )
+				.hasArg()
+                .withDescription(  "The number of new calls to be created per second (default 1)" )
+                .create( "r" );
+		opts.addOption(help);
+		opts.addOption(scenarioFile);
+		opts.addOption(rate);
+		return opts;
 	}
 }

@@ -14,6 +14,7 @@ public class CallOpeningTask implements TimerTask {
 	private Timeout handle;
 	private long start;
 	private double rate;
+	private boolean finished = false;
 	
 	public CallOpeningTask(Scenario scenario, SocketManager socketManager, double rate) {
 		this.scenario = scenario;
@@ -24,14 +25,18 @@ public class CallOpeningTask implements TimerTask {
 	}
 	
 	public synchronized void stop() {
-		this.handle.cancel();
+		this.finished = true;
 	}
 	
 	@Override
 	public synchronized void run(Timeout timeout) throws Exception {
+		if (finished) {
+			return;
+		}
 		long runtime = System.currentTimeMillis() - this.start;
-		double msPerCall = (this.rate / 1000.0);
-		long expectedCalls = (long) (runtime * msPerCall);
+		double callsPerMs = (this.rate / 1000.0);
+		double msPerCall = 1 / callsPerMs;
+		long expectedCalls = (long) (runtime * callsPerMs);
 		long callstoStart = expectedCalls - this.callNum;
 		this.handle = timeout;
 		timeout.timer().newTimeout(this, (long) msPerCall, TimeUnit.MILLISECONDS);

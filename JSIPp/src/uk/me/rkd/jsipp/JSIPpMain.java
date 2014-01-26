@@ -32,29 +32,12 @@ public class JSIPpMain {
 	public JSIPpMain() {
 		// TODO Auto-generated constructor stub
 	}
-	
-	private static Options createOptions() {
-		Options opts = new Options();
-		Option help = new Option("h", "display help text");
-		Option scenarioFile = OptionBuilder.withArgName( "file" )
-				.hasArg()
-                .withDescription(  "The XML file defining the SIPp scenario" )
-                .create( "sf" );
-		Option rate = OptionBuilder.withArgName( "rate" )
-				.hasArg()
-                .withDescription(  "The number of new calls to be created per second (default 1)" )
-                .create( "r" );
-		opts.addOption(help);
-		opts.addOption(scenarioFile);
-		opts.addOption(rate);
-		return opts;
-	}
 
 	public static void main (String argv[]) throws ParserConfigurationException, SAXException, IOException, InterruptedException, ParseException {
 		CommandLineParser parser = new BasicParser();
-		CommandLine cmd = parser.parse( createOptions(), argv);
+		CommandLine cmd = parser.parse( Configuration.createOptions(), argv);
 		if (cmd.hasOption("h") || (cmd.getArgList().size() != 1)) {
-			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", createOptions());
+			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", Configuration.createOptions());
 			return;
 		}
 		Configuration cfg = Configuration.createFromOptions(cmd);
