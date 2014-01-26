@@ -1,0 +1,4 @@
+language: java
+
+install: cd JSIPp && mvn install -DskipTests=true
+
