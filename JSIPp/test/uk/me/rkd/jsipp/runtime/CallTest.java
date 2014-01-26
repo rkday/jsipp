@@ -1,9 +1,13 @@
 package uk.me.rkd.jsipp.runtime;
 
 import static org.junit.Assert.*;
+import gov.nist.javax.sip.message.SIPMessage;
+import gov.nist.javax.sip.message.SIPRequest;
+import gov.nist.javax.sip.parser.StringMsgParser;
 import io.netty.util.Timeout;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -14,6 +18,8 @@ import uk.me.rkd.jsipp.compiler.Scenario;
 import static org.mockito.Mockito.*;
 
 public class CallTest {
+	
+	static StringMsgParser p = new StringMsgParser();
 
 	   String resp = "SIP/2.0 200 OK\r\n" +
 	   "Via: SIP/2.0/TCP client.atlanta.example.com:5060;branch=z9hG4bK74bf9\r\n" +
@@ -60,14 +66,14 @@ public class CallTest {
 		        "\r\n";
 	
 	@Test
-	public void test() throws ParserConfigurationException, SAXException, IOException, InterruptedException {
+	public void test() throws ParserConfigurationException, SAXException, IOException, InterruptedException, ParseException {
 		SocketManager sm = mock(SocketManager.class);
 		Scenario s = Scenario.fromXMLFilename("resources/message-uas.xml");
 		Scheduler sched = new Scheduler(1);
 		Call c = new Call(1, s.phases(), sm);
 		c.registerSocket();
 		sched.add(c, 0);
-		c.process_incoming(message_req);
+		c.process_incoming(p.parseSIPMessage(message_req.getBytes(), true, true, null));
 		Thread.sleep(50);
 		verify(sm).send(eq(1), anyString());
 		Thread.sleep(50);
@@ -75,17 +81,17 @@ public class CallTest {
 	}
 	
 	@Test
-	public void testBadInput() throws ParserConfigurationException, SAXException, IOException {
+	public void testBadInput() throws ParserConfigurationException, SAXException, IOException, ParseException {
 		SocketManager sm = mock(SocketManager.class);
 		Scenario s = Scenario.fromXMLFilename("resources/message-uas.xml");
 		Call c = new Call(2, s.phases(), sm);
 		c.registerSocket();
-		c.process_incoming(req);
+		c.process_incoming(p.parseSIPMessage(req.getBytes(), true, true, null));
 		verify(sm).remove(c);
 	}
 	
 	@Test
-	public void testUAC() throws ParserConfigurationException, SAXException, IOException, InterruptedException {
+	public void testUAC() throws ParserConfigurationException, SAXException, IOException, InterruptedException, ParseException {
 		SocketManager sm = mock(SocketManager.class);
 		Scheduler sched = new Scheduler(1);
 		Scenario s = Scenario.fromXMLFilename("resources/message.xml");
@@ -93,7 +99,8 @@ public class CallTest {
 		sched.add(c, 0);
 		Thread.sleep(50);
 		verify(sm).send(eq(3), anyString());
-		c.process_incoming(resp);
+		c.process_incoming(p.parseSIPMessage(resp.getBytes(), true, true, null));
+		Thread.sleep(50);
 		verify(sm).remove(c);
 	}
 

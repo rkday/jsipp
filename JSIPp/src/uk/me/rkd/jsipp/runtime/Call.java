@@ -6,10 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import gov.nist.javax.sip.message.SIPMessage;
+import gov.nist.javax.sip.message.SIPRequest;
+import gov.nist.javax.sip.message.SIPResponse;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
+import uk.me.rkd.jsipp.compiler.phases.RecvPhase.RecvType;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 
 public class Call implements TimerTask {
@@ -97,13 +101,13 @@ public class Call implements TimerTask {
 	}
 
 
-	public synchronized void process_incoming(String message) {
+	public synchronized void process_incoming(SIPMessage message) {
 		// TODO Auto-generated method stub
 		CallPhase phase = this.phases.get(this.phaseIndex);
 		if (phase instanceof RecvPhase) {
 			String expected = ((RecvPhase)phase).expected;
-			String firstLine = message.substring(0, message.indexOf("\n"));
-			if (firstLine.contains(expected)) {
+			if (((message instanceof SIPRequest) && ((SIPRequest)message).getMethod().equals(expected)) ||
+					((message instanceof SIPResponse) && ((SIPResponse)message).getStatusCode() == Integer.parseInt(expected))) {
 				System.out.println("Call " + Integer.toString(getNumber()) + " received " + expected);
 				this.phaseIndex += 1;
 				this.timeoutEnds = -1;
@@ -111,7 +115,7 @@ public class Call implements TimerTask {
 					this.run(this.currentTimeout);
 				}
 			} else {
-				System.out.println("Received " + firstLine + ", expected " + expected);
+				System.out.println("Expected " + expected);
 				this.end();
 			}
 		}

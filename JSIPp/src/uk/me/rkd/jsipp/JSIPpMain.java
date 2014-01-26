@@ -25,6 +25,8 @@ import uk.me.rkd.jsipp.compiler.Scenario;
 import uk.me.rkd.jsipp.runtime.CallOpeningTask;
 import uk.me.rkd.jsipp.runtime.Scheduler;
 import uk.me.rkd.jsipp.runtime.SocketManager;
+import uk.me.rkd.jsipp.runtime.MultiSocketManager;
+import uk.me.rkd.jsipp.runtime.TCPMultiSocketManager;
 import uk.me.rkd.jsipp.runtime.UDPMultiSocketManager;
 
 public class JSIPpMain {
@@ -43,7 +45,12 @@ public class JSIPpMain {
 		Configuration cfg = Configuration.createFromOptions(cmd);
 		Scenario scenario = Scenario.fromXMLFilename(cfg.getScenarioFile());
 		Scheduler sched = new Scheduler(50);
-		SocketManager sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+		SocketManager sm;
+		if (cfg.getTransport() == "udp") {
+			sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+		} else {
+			sm = new TCPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+		}
 		CallOpeningTask opentask = new CallOpeningTask(scenario, sm, cfg.getRate());
 
 		sched.add(opentask, 10);
