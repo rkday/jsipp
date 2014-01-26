@@ -76,23 +76,7 @@ public class StreamMessageParser {
 	boolean partialLineRead = false; // if we didn't receive enough bytes for a full line we expect the line to end in the next batch of bytes
 	String partialLine = "";
 	String callId;
-	
-	public static class UnparsedMessage {
-		String lines;
-		byte[] body;
-		public UnparsedMessage(String messageLines, byte[] body) {
-			this.lines = messageLines;
-			this.body = body;
-		}
-		
-		public String toString() {
-			return super.toString() + "\n" + lines;
-		}
-	}
 
-	public void close() {
-		
-	}
 	
 	StringBuffer message = new StringBuffer();
 	byte[] messageBody = null;
@@ -211,7 +195,7 @@ public class StreamMessageParser {
 		}
 	}
 	
-	public synchronized void addBytes(byte[] bytes)  throws Exception{
+	public synchronized void addBytes(byte[] bytes)  throws IOException{
 		currentStreamEnded = false;
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 		readStream(inputStream);

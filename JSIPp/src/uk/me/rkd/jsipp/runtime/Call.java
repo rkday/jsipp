@@ -77,7 +77,7 @@ public class Call implements TimerTask {
 				}
 			} else if (currentPhase instanceof SendPhase) {
 				try {
-					String message = KeywordReplacer.replaceKeywords(((SendPhase)currentPhase).message, this.callVariables, true);
+					String message = KeywordReplacer.replaceKeywords(((SendPhase)currentPhase).message, this.callVariables, false);
 					this.sm.send(this.callNumber, message);
 				} catch (IOException | IllegalStateException e) {
 					// TODO Auto-generated catch block
@@ -107,7 +107,9 @@ public class Call implements TimerTask {
 				System.out.println("Call " + Integer.toString(getNumber()) + " received " + expected);
 				this.phaseIndex += 1;
 				this.timeoutEnds = -1;
-				this.run(this.currentTimeout);
+				if (this.currentTimeout != null) {
+					this.run(this.currentTimeout);
+				}
 			} else {
 				System.out.println("Received " + firstLine + ", expected " + expected);
 				this.end();
