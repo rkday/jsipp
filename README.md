@@ -1,5 +1,8 @@
 # JSIPp
 
+[![Build Status](https://travis-ci.org/rkday/jsipp.png?branch=master)](https://travis-ci.org/rkday/jsipp)
+[![Coverage Status](https://coveralls.io/repos/rkday/jsipp/badge.png?branch=master)](https://coveralls.io/r/rkday/jsipp?branch=master)
+
 ## What is this?
 
 This is an experimental rewrite of [SIPp](http://sipp.sourceforge.net) in Java, designed to be compatible with the same XML files and command-line arguments, and have roughly equal performance, but to provide a cleaner, smaller, more modular base for faster future development.
