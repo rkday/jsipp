@@ -3,4 +3,4 @@ language: java
 install: cd JSIPp && mvn install -DskipTests=true
 
 after_success:
-  - mvn test jacoco:report coveralls:jacoco
+  - mvn cobertura:cobertura coveralls:cobertura -DsourceEncoding=UTF-8
