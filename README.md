@@ -25,6 +25,6 @@ It's usable with `java -jar jsipp-0.0.1.jar -sf message.xml -r <rate per second>
 
 ## How can I contribute?
 
-See the [design notes](https://github.com/rkday/jsipp/blob/master/design.md) for an overview. Good things to implement are TCP, socket multiplexing or additinal SIPp keywords - a more detailed TODO is coming soon.
+See the [design notes](https://github.com/rkday/jsipp/blob/master/design.md) for an overview, and [the SIPp docs](http://sipp.sourceforge.net/doc/reference.html) for a list of the function that needs to be ported over. In particular, more keywords would be great, as would more in-call actions, CSV file injection and maybe 3PCC - I'm planning to focus my own efforts on transport protocols, SIP parsing and media early on, rather than tackling those areas. 
 
 Feedback on the [planned future directions](https://github.com/rkday/jsipp/blob/master/future-directions.md) would also be useful, especially if there are use-cases it doesn't cover.
