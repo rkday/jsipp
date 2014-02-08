@@ -15,7 +15,7 @@ import gov.nist.javax.sip.parser.SIPMessageListener;
 
 import org.junit.Test;
 
-import uk.me.rkd.jsipp.runtime.StreamMessageParser;
+import uk.me.rkd.jsipp.runtime.parsers.StreamMessageParser;
 
 public class JainSIPParserTest {
 	   String resp = "SIP/2.0 200 OK\r\n" +

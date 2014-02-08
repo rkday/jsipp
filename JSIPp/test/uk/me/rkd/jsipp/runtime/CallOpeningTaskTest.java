@@ -15,6 +15,7 @@ import org.mockito.internal.matchers.Any;
 import org.xml.sax.SAXException;
 
 import uk.me.rkd.jsipp.compiler.Scenario;
+import uk.me.rkd.jsipp.runtime.network.SocketManager;
 
 public class CallOpeningTaskTest {
 

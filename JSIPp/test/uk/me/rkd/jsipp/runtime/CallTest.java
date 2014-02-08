@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import uk.me.rkd.jsipp.compiler.Scenario;
+import uk.me.rkd.jsipp.runtime.network.SocketManager;
 import static org.mockito.Mockito.*;
 
 public class CallTest {
