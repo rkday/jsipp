@@ -1,6 +1,6 @@
 package uk.me.rkd.jsipp.runtime;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
 
@@ -8,7 +8,7 @@ import org.junit.Test;
 
 class TestTimer implements TimerTask {
 	public int timesScheduled = 0;
-	
+
 	public void run(Timeout timer) {
 		this.timesScheduled += 1;
 	}
@@ -22,8 +22,8 @@ public class SchedulerTest {
 		TestTimer t = new TestTimer();
 		s.add(t, 0);
 		assertEquals(0, t.timesScheduled);
-		Thread.sleep(200);
-		assertEquals(1, t.timesScheduled);	
+		Thread.sleep(300);
+		assertEquals(1, t.timesScheduled);
 	}
 
 	@Test
@@ -34,7 +34,7 @@ public class SchedulerTest {
 		s.stop();
 		assertEquals(0, t.timesScheduled);
 		Thread.sleep(200);
-		assertEquals(0, t.timesScheduled);	
+		assertEquals(0, t.timesScheduled);
 	}
-	
+
 }

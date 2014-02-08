@@ -1,13 +1,9 @@
 package uk.me.rkd.jsipp.runtime.network;
 
-import gov.nist.javax.sip.message.SIPMessage;
-import gov.nist.javax.sip.parser.SIPMessageListener;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,35 +13,9 @@ public abstract class MultiSocketManager extends SocketManager {
 
 	Map<Integer, SelectableChannel> callNumToSocket;
 
-	class PerSocketListener implements SIPMessageListener {
-
-		private Call call;
-
-		public PerSocketListener(Call call) {
-			super();
-			this.call = call;
-		}
-
-		@Override
-		public void handleException(ParseException arg0, SIPMessage arg1, Class arg2, String arg3, String arg4)
-		        throws ParseException {
-			arg0.printStackTrace();
-		}
-
-		@Override
-		public void processMessage(SIPMessage arg0) throws Exception {
-			call.process_incoming(arg0);
-		}
-
-		@Override
-		public void sendSingleCLRF() throws Exception {
-			// TODO Auto-generated method stub
-
-		}
-	}
-
-	public MultiSocketManager(String defaultHost, int defaultPort) throws IOException {
-		super(defaultHost, defaultPort);
+	public MultiSocketManager(String defaultHost, int defaultPort, NetworkProtocolHandler nethandler)
+	                                                                                                 throws IOException {
+		super(defaultHost, defaultPort, nethandler);
 		this.callNumToSocket = new HashMap<Integer, SelectableChannel>();
 	}
 
@@ -59,7 +29,7 @@ public abstract class MultiSocketManager extends SocketManager {
 	public void setdest(Integer callNumber, String host, int port) throws IOException {
 		// TODO Auto-generated method stub
 		SelectableChannel chan = this.callNumToSocket.get(callNumber);
-		connect(chan, new InetSocketAddress(host, port));
+		nethandler.connect(chan, new InetSocketAddress(host, port));
 	}
 
 	@Override
@@ -81,13 +51,13 @@ public abstract class MultiSocketManager extends SocketManager {
 			return;
 		}
 		ByteBuffer buf = ByteBuffer.wrap(message.getBytes());
-		write(chan, buf);
+		nethandler.write(chan, buf);
 	}
 
 	@Override
 	public void add(Call call) throws IOException {
-		SelectableChannel chan = newChan();
-		connect(chan, this.defaultTarget);
+		SelectableChannel chan = nethandler.newChan();
+		nethandler.connect(chan, this.defaultTarget);
 		chan.configureBlocking(false);
 		this.readerThread.newCallQueue.add(new CallAndChan(call, chan));
 		this.callNumToSocket.put(call.getNumber(), chan);

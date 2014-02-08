@@ -20,12 +20,14 @@ public abstract class SocketManager {
 	Selector selector;
 	SelectorThread readerThread;
 	SocketAddress defaultTarget;
+	NetworkProtocolHandler nethandler;
 
-	public SocketManager(String defaultHost, int defaultPort) throws IOException {
+	public SocketManager(String defaultHost, int defaultPort, NetworkProtocolHandler nethandler) throws IOException {
 		this.defaultTarget = new InetSocketAddress(defaultHost, defaultPort);
 		this.selector = Selector.open();
 		this.readerThread = new SelectorThread();
 		this.readerThread.start();
+		this.nethandler = nethandler;
 	}
 
 	class CallAndChan {
@@ -63,7 +65,7 @@ public abstract class SocketManager {
 							ByteBuffer dst = ByteBuffer.allocate(2048);
 							try {
 								System.out.println("Reading from channel...");
-								read(chan, dst);
+								nethandler.read(chan, dst);
 								parser.addBytes(dst.array());
 							} catch (IOException | ParseException e) {
 								e.printStackTrace();
@@ -108,14 +110,6 @@ public abstract class SocketManager {
 	public abstract void remove(Call call) throws IOException;
 
 	public abstract void stop() throws IOException;
-
-	protected abstract void write(SelectableChannel chan, ByteBuffer buf) throws IOException;
-
-	protected abstract void read(SelectableChannel chan, ByteBuffer buf) throws IOException;
-
-	protected abstract void connect(SelectableChannel chan, SocketAddress addr) throws IOException;
-
-	protected abstract SelectableChannel newChan() throws IOException;
 
 	protected abstract SIPpMessageParser createParser(Call call);
 }
