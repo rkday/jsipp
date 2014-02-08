@@ -18,4 +18,8 @@ public abstract class NetworkProtocolHandler {
 	public abstract void connect(SelectableChannel chan, SocketAddress addr) throws IOException;
 
 	public abstract SelectableChannel newChan() throws IOException;
+
+	public abstract SocketAddress getLocalAddress(SelectableChannel chan) throws IOException;
+
+	public abstract SocketAddress getRemoteAddress(SelectableChannel chan) throws IOException;
 }

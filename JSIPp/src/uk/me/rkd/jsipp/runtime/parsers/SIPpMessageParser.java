@@ -49,4 +49,12 @@ public abstract class SIPpMessageParser {
 		sipMessageListener = mlistener;
 	}
 
+	public static int getBodyLength(String message) {
+		String[] parts = message.split("\r\n\r\n", 2);
+		if (parts.length == 1) {
+			return 0;
+		}
+		System.out.println(parts[1]);
+		return parts[1].length();
+	}
 }

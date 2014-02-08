@@ -47,7 +47,6 @@ public abstract class SocketManager {
 		public void run() {
 			int available = 0;
 			while (!this.isInterrupted() && SocketManager.this.selector.isOpen()) {
-				System.out.println("Selector loop...");
 				try {
 					available = SocketManager.this.selector.select(50);
 				} catch (IOException e1) {
@@ -102,6 +101,10 @@ public abstract class SocketManager {
 	}
 
 	public abstract void setdest(Integer callNumber, String host, int port) throws IOException;
+
+	public abstract SocketAddress getdest(Integer callNumber) throws IOException;
+
+	public abstract SocketAddress getaddr(Integer callNumber) throws IOException;
 
 	public abstract void send(Integer callNumber, String message) throws IOException;
 

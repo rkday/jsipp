@@ -2,6 +2,7 @@ package uk.me.rkd.jsipp.runtime.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.util.HashMap;
@@ -30,6 +31,18 @@ public abstract class MultiSocketManager extends SocketManager {
 		// TODO Auto-generated method stub
 		SelectableChannel chan = this.callNumToSocket.get(callNumber);
 		nethandler.connect(chan, new InetSocketAddress(host, port));
+	}
+
+	@Override
+	public SocketAddress getdest(Integer callNumber) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		return nethandler.getRemoteAddress(chan);
+	}
+
+	@Override
+	public SocketAddress getaddr(Integer callNumber) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		return nethandler.getLocalAddress(chan);
 	}
 
 	@Override

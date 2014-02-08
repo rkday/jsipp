@@ -28,6 +28,16 @@ public class TCPHandler extends NetworkProtocolHandler {
 	}
 
 	@Override
+	public SocketAddress getLocalAddress(SelectableChannel chan) throws IOException {
+		return ((SocketChannel) chan).getLocalAddress();
+	}
+
+	@Override
+	public SocketAddress getRemoteAddress(SelectableChannel chan) throws IOException {
+		return ((SocketChannel) chan).getRemoteAddress();
+	}
+
+	@Override
 	public SelectableChannel newChan() throws IOException {
 		return SocketChannel.open();
 	}

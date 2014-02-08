@@ -3,8 +3,8 @@ package uk.me.rkd.jsipp.runtime.network;
 import java.io.IOException;
 
 import uk.me.rkd.jsipp.runtime.Call;
-import uk.me.rkd.jsipp.runtime.parsers.DatagramMessageParser;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
+import uk.me.rkd.jsipp.runtime.parsers.StreamMessageParser;
 
 public class UDPMultiplexingSocketManager extends MultiplexingSocketManager {
 
@@ -14,6 +14,6 @@ public class UDPMultiplexingSocketManager extends MultiplexingSocketManager {
 
 	@Override
 	public SIPpMessageParser createParser(Call call) {
-		return new DatagramMessageParser(new SocketListener(this));
+		return new StreamMessageParser(new SocketListener(this), 4096);
 	}
 }

@@ -46,7 +46,7 @@
       [last_To:]
       [last_Call-ID:]
       [last_CSeq:]
-      Contact: <sip:[local_ip]:[local_port];transport=[transport]>
+      Contact: <sip:[media_ip]:[media_port];transport=[transport]>
       Content-Length: 0
 
     ]]>

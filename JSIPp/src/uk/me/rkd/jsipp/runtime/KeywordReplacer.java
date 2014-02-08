@@ -1,14 +1,15 @@
 package uk.me.rkd.jsipp.runtime;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class KeywordReplacer {
 	private static final Pattern keywordPattern = Pattern.compile("\\[(.+?)(\\+(\\d+))?:?\\]");
 	private static final String wholeLinePattern = "\\[last_.+?\\].*?\r\n";
 
-	public static String replaceKeywords(String text, Map<String, String> variables, boolean mustMatchAll)
+	public static String replaceKeywords(String text, Call.variablesList variables, boolean mustMatchAll)
 	        throws IllegalStateException {
 		Matcher m = keywordPattern.matcher(text);
 		Matcher innerKeywordMatch;
@@ -30,6 +31,7 @@ public class KeywordReplacer {
 				throw new IllegalStateException();
 			}
 		}
+		result = StringEscapeUtils.unescapeJava(result);
 		return result;
 	}
 

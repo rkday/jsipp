@@ -1,6 +1,7 @@
 package uk.me.rkd.jsipp.runtime.network;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.Selector;
@@ -41,6 +42,18 @@ public abstract class MultiplexingSocketManager extends SocketManager {
 	public void stop() throws IOException {
 		this.readerThread.interrupt();
 		this.selector.wakeup();
+	}
+
+	@Override
+	public SocketAddress getdest(Integer callNumber) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		return nethandler.getRemoteAddress(chan);
+	}
+
+	@Override
+	public SocketAddress getaddr(Integer callNumber) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		return nethandler.getLocalAddress(chan);
 	}
 
 	@Override

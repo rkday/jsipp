@@ -1,6 +1,9 @@
 package uk.me.rkd.jsipp;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -37,19 +40,28 @@ public class JSIPpMain {
 		Configuration cfg = Configuration.createFromOptions(cmd);
 		Scenario scenario = Scenario.fromXMLFilename(cfg.getScenarioFile());
 		Scheduler sched = new Scheduler(50);
+		Map<String, String> globalVariables = new HashMap<String, String>();
+		globalVariables.put("service", "sipp");
+		globalVariables.put("pid", UUID.randomUUID().toString());
 		SocketManager sm;
 		if (cfg.getTransport().equals("un")) {
 			sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+			globalVariables.put("transport", "UDP");
 		} else if (cfg.getTransport().equals("tn")) {
 			sm = new TCPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+			globalVariables.put("transport", "TCP");
 		} else if (cfg.getTransport().equals("t1")) {
 			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
+			globalVariables.put("transport", "TCP");
 		} else if (cfg.getTransport().equals("u1")) {
 			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
+			globalVariables.put("transport", "UDP");
 		} else {
 			sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+			globalVariables.put("transport", "UDP");
 		}
-		CallOpeningTask opentask = new CallOpeningTask(scenario, sm, cfg.getRate());
+
+		CallOpeningTask opentask = new CallOpeningTask(scenario, sm, cfg.getRate(), globalVariables);
 
 		sched.add(opentask, 10);
 		Thread.sleep(5 * 60 * 1000);
@@ -63,5 +75,4 @@ public class JSIPpMain {
 		sched.stop();
 		System.out.println("fin");
 	}
-
 }

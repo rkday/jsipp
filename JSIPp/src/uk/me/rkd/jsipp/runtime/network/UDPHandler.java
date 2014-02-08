@@ -28,6 +28,16 @@ public class UDPHandler extends NetworkProtocolHandler {
 	}
 
 	@Override
+	public SocketAddress getLocalAddress(SelectableChannel chan) throws IOException {
+		return ((DatagramChannel) chan).getLocalAddress();
+	}
+
+	@Override
+	public SocketAddress getRemoteAddress(SelectableChannel chan) throws IOException {
+		return ((DatagramChannel) chan).getRemoteAddress();
+	}
+
+	@Override
 	public SelectableChannel newChan() throws IOException {
 		return DatagramChannel.open();
 	}

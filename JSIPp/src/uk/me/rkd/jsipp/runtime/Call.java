@@ -7,15 +7,19 @@ import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
 
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
+import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
 
 public class Call implements TimerTask {
 
@@ -30,20 +34,68 @@ public class Call implements TimerTask {
 	}
 
 	private int phaseIndex = 0;
-	private Map<String, String> callVariables = new HashMap<String, String>();
 	private List<CallPhase> phases;
 	private SocketManager sm;
 	private long timeoutEnds;
 	private Timeout currentTimeout;
+	private SIPMessage lastMessage;
+	private variablesList variables = new variablesList();
+	private Map<String, String> globalVariables;
 
-	// unfinished
-	private class variablesList {
+	public class variablesList {
+
+		private Map<String, String> callVariables = new HashMap<String, String>();
+
+		void put(String k, String v) {
+			callVariables.put(k, v);
+		}
+
+		void remove(String k) {
+			callVariables.remove(k);
+		}
 
 		String get(String name) {
-			// look in per-call variables
-			// look in global variables
-			// for last_, look in last received message
-			return "";
+			try {
+				if (name.equals("local_port")) {
+					return Integer.toString(getLocalAddress().getPort());
+				} else if (name.equals("remote_port")) {
+					return Integer.toString(getRemoteAddress().getPort());
+				} else if (name.equals("local_ip")) {
+					System.out.println(getLocalAddress().getAddress().getHostAddress());
+					return getLocalAddress().getAddress().getHostAddress();
+				} else if (name.equals("remote_ip")) {
+					return getRemoteAddress().getAddress().getHostAddress();
+				} else if (name.equals("local_ip_type")) {
+					return (getLocalAddress().getAddress() instanceof Inet6Address) ? "6" : "4";
+				} else if (name.equals("media_ip")) {
+					return "0.0.0.0";
+				} else if (name.equals("media_port")) {
+					return "0";
+				} else if (name.equals("media_ip_type")) {
+					return "4";
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+			if (callVariables.containsKey(name)) {
+				return callVariables.get(name);
+			}
+
+			if (globalVariables.containsKey(name)) {
+				return globalVariables.get(name);
+			}
+
+			if (name.equals("service")) {
+				return "sipp";
+			}
+
+			if (name.startsWith("last_") && lastMessage != null) {
+				String headerName = name.replace("last_", "");
+				return lastMessage.getHeaderAsFormattedString(headerName).trim();
+			}
+			return null;
 		}
 
 	}
@@ -52,14 +104,14 @@ public class Call implements TimerTask {
 		this.sm.add(this);
 	}
 
-	public Call(int callNum, List<CallPhase> phases, SocketManager sm) {
-		// TODO Auto-generated constructor stub
+	public Call(int callNum, List<CallPhase> phases, SocketManager sm, Map<String, String> globalVariables) {
 		this.callNumber = callNum;
 		this.callId = Integer.toString(callNum);
-		this.callVariables.put("call_num", Integer.toString(callNum));
-		this.callVariables.put("call_id", this.callId);
+		this.variables.put("call_number", Integer.toString(callNum));
+		this.variables.put("call_id", this.callId);
 		this.phases = phases;
 		this.sm = sm;
+		this.globalVariables = globalVariables;
 		System.out.println("Call " + Integer.toString(callNum) + " created");
 	}
 
@@ -72,7 +124,8 @@ public class Call implements TimerTask {
 	}
 
 	public synchronized void run(Timeout timeout) {
-		// System.out.println("Call " + Integer.toString(this.callNumber) + " woken up");
+		System.out.println("Call " + Integer.toString(this.getNumber()) + ", phase "
+		        + Integer.toString(this.phaseIndex));
 		if (this.phaseIndex >= this.phases.size()) {
 			System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
 			this.end();
@@ -91,19 +144,31 @@ public class Call implements TimerTask {
 					timeout.timer().newTimeout(this, untilTimeout, TimeUnit.MILLISECONDS);
 				}
 			} else if (currentPhase instanceof SendPhase) {
-				try {
-					String message = KeywordReplacer.replaceKeywords(((SendPhase) currentPhase).message,
-					                                                 this.callVariables, false);
-					this.sm.send(this.callNumber, message);
-				} catch (IOException | IllegalStateException e) {
-					// TODO Auto-generated catch block
-					System.out.println("Send failed");
-					e.printStackTrace();
-					this.end();
-				}
+				send((SendPhase) currentPhase);
 				this.phaseIndex += 1;
 				this.run(timeout);
 			}
+		}
+	}
+
+	public void send(SendPhase currentPhase) {
+		System.out.println("Sending");
+		this.variables.put("branch", "z9hG4bK" + UUID.randomUUID().toString());
+		try {
+			// Do a first pass of keyword replacement, so we fill in the right things in the body and can calculate its
+			// length
+			String message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
+			int len = SIPpMessageParser.getBodyLength(message);
+			this.variables.put("len", Integer.toString(len));
+
+			// Do a second pass now that we know the value of [len]
+			message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
+			this.sm.send(this.callNumber, message);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("Send failed");
+			e.printStackTrace();
+			this.end();
 		}
 	}
 
@@ -112,6 +177,8 @@ public class Call implements TimerTask {
 	}
 
 	public synchronized void process_incoming(SIPMessage message) {
+		this.lastMessage = message;
+
 		CallPhase phase = this.phases.get(this.phaseIndex);
 		if (phase instanceof RecvPhase) {
 			String expected = ((RecvPhase) phase).expected;
@@ -128,5 +195,13 @@ public class Call implements TimerTask {
 				this.end();
 			}
 		}
+	}
+
+	InetSocketAddress getRemoteAddress() throws IOException {
+		return (InetSocketAddress) this.sm.getdest(callNumber);
+	}
+
+	InetSocketAddress getLocalAddress() throws IOException {
+		return (InetSocketAddress) this.sm.getaddr(callNumber);
 	}
 }
