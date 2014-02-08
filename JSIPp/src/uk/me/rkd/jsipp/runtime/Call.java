@@ -41,6 +41,7 @@ public class Call implements TimerTask {
 	private SIPMessage lastMessage;
 	private variablesList variables = new variablesList();
 	private Map<String, String> globalVariables;
+	public boolean success = false;
 
 	public class variablesList {
 
@@ -127,6 +128,7 @@ public class Call implements TimerTask {
 		System.out.println("Call " + Integer.toString(this.getNumber()) + ", phase "
 		        + Integer.toString(this.phaseIndex));
 		if (this.phaseIndex >= this.phases.size()) {
+			this.success = true;
 			System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
 			this.end();
 		} else {
@@ -191,6 +193,12 @@ public class Call implements TimerTask {
 					this.run(this.currentTimeout);
 				}
 			} else {
+				// No match - check if this was optional
+				if (((RecvPhase) phase).optional) {
+					this.phaseIndex += 1;
+					process_incoming(message);
+					return;
+				}
 				System.out.println("Expected " + expected);
 				this.end();
 			}
