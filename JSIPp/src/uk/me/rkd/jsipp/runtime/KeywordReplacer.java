@@ -5,13 +5,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class KeywordReplacer {
-	private static final Pattern keywordPattern = Pattern.compile("\\[(.+?):?\\]");
+	private static final Pattern keywordPattern = Pattern.compile("\\[(.+?)(\\+(\\d+))?:?\\]");
 	private static final String wholeLinePattern = "\\[last_.+?\\].*?\r\n";
 
-	
-	public static String replaceKeywords(String text,
-			Map<String, String> variables,
-			boolean mustMatchAll) throws IllegalStateException {
+	public static String replaceKeywords(String text, Map<String, String> variables, boolean mustMatchAll)
+	        throws IllegalStateException {
 		Matcher m = keywordPattern.matcher(text);
 		Matcher innerKeywordMatch;
 		String result = text;
@@ -20,6 +18,9 @@ public class KeywordReplacer {
 			String keywordBlock = m.group(0); // e.g. [last_Via:]
 			String keyword = m.group(1); // e.g. last_Via
 			String replacement = variables.get(keyword);
+			if (m.group(3) != null) {
+				replacement = Integer.toString(Integer.parseInt(replacement) + Integer.parseInt(m.group(3)));
+			}
 			position = m.end();
 			if (replacement != null) {
 				result = result.replace(keywordBlock, replacement);
@@ -31,7 +32,7 @@ public class KeywordReplacer {
 		}
 		return result;
 	}
-	
+
 	private KeywordReplacer() {
 		// TODO Auto-generated constructor stub
 	}
