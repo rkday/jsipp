@@ -1,5 +1,7 @@
 package uk.me.rkd.jsipp.compiler.phases;
 
+import gov.nist.javax.sip.message.SIPMessage;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,6 +12,7 @@ public class SendPhase extends CallPhase {
 	public static final Pattern initialSpaces = Pattern.compile("^\\s*");
 
 	public SendPhase(Node xmlnode) {
+		this.expected = "<<SENDING>>";
 		String raw_message = xmlnode.getFirstChild().getTextContent();
 		this.message = this.stripWhitespace(raw_message);
 	}
@@ -64,5 +67,15 @@ public class SendPhase extends CallPhase {
 			stringSoFar += "\r\n\r\n";
 		}
 		return stringSoFar;
+	}
+
+	@Override
+	public boolean expected(SIPMessage msg) {
+		return false;
+	}
+
+	@Override
+	public boolean isOptional() {
+		return false;
 	}
 }

@@ -9,7 +9,7 @@ public class KeywordReplacer {
 	private static final Pattern keywordPattern = Pattern.compile("\\[(.+?)(\\+(\\d+))?:?\\]");
 	private static final String wholeLinePattern = "\\[last_.+?\\].*?\r\n";
 
-	public static String replaceKeywords(String text, Call.variablesList variables, boolean mustMatchAll)
+	public static String replaceKeywords(String text, Call.VariablesList variables, boolean mustMatchAll)
 	        throws IllegalStateException {
 		Matcher m = keywordPattern.matcher(text);
 		Matcher innerKeywordMatch;

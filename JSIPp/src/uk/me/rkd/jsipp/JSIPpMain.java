@@ -19,9 +19,7 @@ import uk.me.rkd.jsipp.compiler.Scenario;
 import uk.me.rkd.jsipp.runtime.CallOpeningTask;
 import uk.me.rkd.jsipp.runtime.Scheduler;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
-import uk.me.rkd.jsipp.runtime.network.TCPMultiSocketManager;
 import uk.me.rkd.jsipp.runtime.network.TCPMultiplexingSocketManager;
-import uk.me.rkd.jsipp.runtime.network.UDPMultiSocketManager;
 import uk.me.rkd.jsipp.runtime.network.UDPMultiplexingSocketManager;
 
 public class JSIPpMain {
@@ -51,10 +49,10 @@ public class JSIPpMain {
 		SocketManager sm;
 
 		if (cfg.getTransport().equals("un")) {
-			sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 4096);
 			globalVariables.put("transport", "UDP");
 		} else if (cfg.getTransport().equals("tn")) {
-			sm = new TCPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 4096);
 			globalVariables.put("transport", "TCP");
 		} else if (cfg.getTransport().equals("t1")) {
 			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
@@ -63,7 +61,7 @@ public class JSIPpMain {
 			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
 			globalVariables.put("transport", "UDP");
 		} else {
-			sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
+			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 4096);
 			globalVariables.put("transport", "UDP");
 		}
 

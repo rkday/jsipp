@@ -46,6 +46,18 @@ public abstract class SocketManager {
 		this.readerThread.start();
 	}
 
+	public void setListener(SocketAddress bindAddr) throws IOException {
+		SelectableChannel listener = this.nethandler.newListener(bindAddr);
+		listener.configureBlocking(false);
+		if ((listener.validOps() & SelectionKey.OP_ACCEPT) != 0) {
+			listener.register(this.selector, SelectionKey.OP_ACCEPT, null);
+		} else {
+			SIPpMessageParser parser = createParser(listener, null);
+			listener.register(this.selector, SelectionKey.OP_READ, parser);
+		}
+		System.out.println("Created and bound network listener");
+	}
+
 	protected class SelectorThread extends Thread {
 		public Queue<SelectionKey> deadKeyQueue = new ConcurrentLinkedQueue<SelectionKey>();
 		public Queue<CallAndChan> newCallQueue = new ConcurrentLinkedQueue<CallAndChan>();
@@ -57,48 +69,17 @@ public abstract class SocketManager {
 				try {
 					available = SocketManager.this.selector.select();
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					System.out.println("Selector is closed, terminating thread");
 					break;
 				}
 				if (available > 0) {
-					System.out.println("Selectors available...");
 					Iterator<SelectionKey> keyIterator = SocketManager.this.selector.selectedKeys().iterator();
 					while (keyIterator.hasNext()) {
 						SelectionKey key = keyIterator.next();
 						if (key.isReadable()) {
-							SelectableChannel chan = key.channel();
-							SIPpMessageParser parser = (SIPpMessageParser) key.attachment();
-							ByteBuffer dst = ByteBuffer.allocate(2048);
-							try {
-								System.out.println("Reading from channel...");
-								int result = nethandler.read(chan, dst);
-								if (result == -1) {
-									System.out.println("Closing channel...");
-									nethandler.close(chan);
-									key.cancel();
-								} else {
-									System.out.println("Read from channel...");
-									parser.addBytes(dst.array());
-									System.out.println("Parsed...");
-								}
-							} catch (IOException | ParseException e) {
-								e.printStackTrace();
-								// if the channel isn't actually readable, just
-								// skip it
-							}
+							readData(key);
 						} else if (key.isAcceptable()) {
-							System.out.println("Accepting new connection...");
-							ServerSocketChannel chan = (ServerSocketChannel) key.channel();
-							try {
-								SelectableChannel newChan = chan.accept();
-								newChan.configureBlocking(false);
-								SIPpMessageParser parser = createParser(newChan, null);
-								newChan.register(selector, SelectionKey.OP_READ, parser);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-
+							acceptCxn(key);
 						}
 						keyIterator.remove();
 					}
@@ -125,6 +106,41 @@ public abstract class SocketManager {
 				}
 			}
 		}
+
+		private void acceptCxn(SelectionKey key) {
+			ServerSocketChannel chan = (ServerSocketChannel) key.channel();
+			try {
+				SelectableChannel newChan = chan.accept();
+				newChan.configureBlocking(false);
+				SIPpMessageParser parser = createParser(newChan, null);
+				newChan.register(selector, SelectionKey.OP_READ, parser);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private void readData(SelectionKey key) {
+			SelectableChannel chan = key.channel();
+			SIPpMessageParser parser = (SIPpMessageParser) key.attachment();
+			ByteBuffer dst = ByteBuffer.allocate(2048);
+			try {
+				System.out.println("Reading from channel...");
+				int result = nethandler.read(chan, dst);
+				if (result == -1) {
+					System.out.println("Closing channel...");
+					nethandler.close(chan);
+					key.cancel();
+				} else {
+					System.out.println("Read from channel...");
+					parser.addBytes(dst.array());
+					System.out.println("Parsed...");
+				}
+			} catch (IOException | ParseException e) {
+				e.printStackTrace();
+				// if the channel isn't actually readable, just
+				// skip it
+			}
+		}
 	}
 
 	public abstract void setdest(Integer callNumber, String host, int port) throws IOException;
@@ -143,15 +159,4 @@ public abstract class SocketManager {
 
 	protected abstract SIPpMessageParser createParser(SelectableChannel chan, Call call);
 
-	public void setListener(SocketAddress bindAddr) throws IOException {
-		SelectableChannel listener = this.nethandler.newListener(bindAddr);
-		listener.configureBlocking(false);
-		if ((listener.validOps() & SelectionKey.OP_ACCEPT) != 0) {
-			listener.register(this.selector, SelectionKey.OP_ACCEPT, null);
-		} else {
-			SIPpMessageParser parser = createParser(listener, null);
-			listener.register(this.selector, SelectionKey.OP_READ, parser);
-		}
-		System.out.println("Created and bound network listener");
-	}
 }

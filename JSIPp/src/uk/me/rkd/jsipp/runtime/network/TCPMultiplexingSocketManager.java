@@ -11,7 +11,6 @@ public class TCPMultiplexingSocketManager extends MultiplexingSocketManager {
 
 	public TCPMultiplexingSocketManager(String defaultHost, int defaultPort, int numSockets) throws IOException {
 		super(defaultHost, defaultPort, new TCPHandler(), numSockets);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

@@ -15,8 +15,7 @@ public class TCPHandler extends NetworkProtocolHandler {
 
 	@Override
 	public void write(SelectableChannel chan, ByteBuffer buf) throws IOException {
-		int sent = 0;
-		sent = ((SocketChannel) chan).write(buf);
+		((SocketChannel) chan).write(buf);
 	}
 
 	@Override

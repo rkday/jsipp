@@ -34,6 +34,10 @@ public class CallOpeningTask implements TimerTask {
 		return INSTANCE;
 	}
 
+	public static void reset() {
+		INSTANCE = null;
+	}
+
 	private CallOpeningTask(Scenario scenario, SocketManager socketManager, double rate, Timer timer,
 	                        Map<String, String> globalVariables) {
 		this.scenario = scenario;

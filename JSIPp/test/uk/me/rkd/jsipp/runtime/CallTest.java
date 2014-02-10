@@ -68,7 +68,7 @@ public class CallTest {
 		Thread.sleep(50);
 		verify(sm).send(eq(1), anyString());
 		Thread.sleep(50);
-		assertTrue(c.success);
+		assertTrue(c.hasCompleted());
 		verify(sm).remove(c);
 		sched.stop();
 	}
@@ -95,7 +95,7 @@ public class CallTest {
 		verify(sm).send(eq(3), anyString());
 		c.process_incoming(p.parseSIPMessage(resp.getBytes(), true, true, null));
 		Thread.sleep(400);
-		assertTrue(c.success);
+		assertTrue(c.hasCompleted());
 		verify(sm).remove(c);
 		sched.stop();
 	}
@@ -112,7 +112,7 @@ public class CallTest {
 		verify(sm).send(eq(3), anyString());
 		c.process_incoming(p.parseSIPMessage(resp.getBytes(), true, true, null));
 		Thread.sleep(200);
-		assertTrue(c.success);
+		assertTrue(c.hasCompleted());
 		verify(sm).remove(c);
 		sched.stop();
 	}
@@ -132,7 +132,7 @@ public class CallTest {
 		verify(sm, never()).remove(c);
 		c.process_incoming(p.parseSIPMessage(resp.getBytes(), true, true, null));
 		Thread.sleep(200);
-		assertTrue(c.success);
+		assertTrue(c.hasCompleted());
 		verify(sm).remove(c);
 		sched.stop();
 	}

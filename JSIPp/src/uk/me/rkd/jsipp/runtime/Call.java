@@ -1,9 +1,8 @@
 package uk.me.rkd.jsipp.runtime;
 
 import gov.nist.javax.sip.message.SIPMessage;
-import gov.nist.javax.sip.message.SIPRequest;
-import gov.nist.javax.sip.message.SIPResponse;
 import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 
 import java.io.IOException;
@@ -33,17 +32,17 @@ public class Call implements TimerTask {
 		return callId;
 	}
 
+	final int NO_TIMEOUT = -1;
 	private int phaseIndex = 0;
 	private List<CallPhase> phases;
 	private SocketManager sm;
-	private long timeoutEnds;
-	private Timeout currentTimeout;
+	private long timeoutEnds = NO_TIMEOUT;
+	private Timer timer;
 	private SIPMessage lastMessage;
-	private variablesList variables = new variablesList();
+	private VariablesList variables = new VariablesList();
 	private Map<String, String> globalVariables;
-	public boolean success = false;
 
-	public class variablesList {
+	public class VariablesList {
 
 		private Map<String, String> callVariables = new HashMap<String, String>();
 
@@ -88,10 +87,6 @@ public class Call implements TimerTask {
 				return globalVariables.get(name);
 			}
 
-			if (name.equals("service")) {
-				return "sipp";
-			}
-
 			if (name.startsWith("last_") && lastMessage != null) {
 				String headerName = name.replace("last_", "");
 				return lastMessage.getHeaderAsFormattedString(headerName).trim();
@@ -125,41 +120,53 @@ public class Call implements TimerTask {
 		}
 	}
 
+	public boolean hasCompleted() {
+		return this.phaseIndex >= this.phases.size();
+	}
+
+	private void reschedule(long when) {
+		if (this.timer != null) {
+			this.timer.newTimeout(this, when, TimeUnit.MILLISECONDS);
+		}
+	}
+
 	public synchronized void run(Timeout timeout) {
-		System.out.println("Call " + Integer.toString(this.getNumber()) + ", phase "
-		        + Integer.toString(this.phaseIndex));
-		if (this.phaseIndex >= this.phases.size()) {
-			this.success = true;
+		System.out.println(String.format("Call %d, phase %d", this.getNumber(), this.phaseIndex));
+		if (hasCompleted()) {
 			System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
 			this.end();
 		} else {
-			CallPhase currentPhase = this.phases.get(this.phaseIndex);
-			this.currentTimeout = timeout;
+			CallPhase currentPhase = getCurrentPhase();
+			this.timer = timeout.timer();
+
+			// If we're waiting to receive, check for timeout
 			if (currentPhase instanceof RecvPhase) {
-				if (this.timeoutEnds == -1) {
-					this.timeoutEnds = ((RecvPhase) currentPhase).timeout;
+				if (this.timeoutEnds == NO_TIMEOUT) {
+					this.timeoutEnds = ((RecvPhase) currentPhase).timeout + System.currentTimeMillis();
 				}
-				long untilTimeout = System.currentTimeMillis() - this.timeoutEnds;
+				long untilTimeout = this.timeoutEnds - System.currentTimeMillis();
 				if (untilTimeout < 0) {
 					System.out.println("Call timed out");
 					this.end();
 				} else {
-					timeout.timer().newTimeout(this, untilTimeout, TimeUnit.MILLISECONDS);
+					// We haven't timed out yet - reschedule ourselves to run when we will time out
+					reschedule(untilTimeout);
 				}
 			} else if (currentPhase instanceof SendPhase) {
-				send((SendPhase) currentPhase);
-				this.phaseIndex += 1;
+				// We're sending - just send and move on
+				send();
+				nextPhase();
 				this.run(timeout);
 			}
 		}
 	}
 
-	public void send(SendPhase currentPhase) {
+	private void send() {
+		SendPhase currentPhase = (SendPhase) getCurrentPhase();
 		System.out.println("Sending");
 		this.variables.put("branch", "z9hG4bK" + UUID.randomUUID().toString());
 		try {
-			// Do a first pass of keyword replacement, so we fill in the right things in the body and can calculate its
-			// length
+			// Do a first pass of keyword replacement, so we can calculate the body length
 			String message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
 			int len = SIPpMessageParser.getBodyLength(message);
 			this.variables.put("len", Integer.toString(len));
@@ -168,7 +175,6 @@ public class Call implements TimerTask {
 			message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
 			this.sm.send(this.callNumber, message);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			System.out.println("Send failed");
 			e.printStackTrace();
 			this.end();
@@ -180,30 +186,32 @@ public class Call implements TimerTask {
 	}
 
 	public synchronized void process_incoming(SIPMessage message) {
+		this.timeoutEnds = NO_TIMEOUT;
 		this.lastMessage = message;
 
-		CallPhase phase = this.phases.get(this.phaseIndex);
-		if (phase instanceof RecvPhase) {
-			String expected = ((RecvPhase) phase).expected;
-			if (((message instanceof SIPRequest) && ((SIPRequest) message).getMethod().equals(expected))
-			        || ((message instanceof SIPResponse) && ((SIPResponse) message).getStatusCode() == Integer.parseInt(expected))) {
-				System.out.println("Call " + Integer.toString(getNumber()) + " received " + expected);
-				this.phaseIndex += 1;
-				this.timeoutEnds = -1;
-				if (this.currentTimeout != null) {
-					this.run(this.currentTimeout);
-				}
-			} else {
-				// No match - check if this was optional
-				if (((RecvPhase) phase).optional) {
-					this.phaseIndex += 1;
-					process_incoming(message);
-					return;
-				}
-				System.out.println("Expected " + expected);
-				this.end();
+		CallPhase phase = getCurrentPhase();
+		if (phase.expected(message)) {
+			System.out.println("Call " + Integer.toString(getNumber()) + " received " + phase.expected);
+			nextPhase();
+			reschedule(0);
+		} else {
+			// No match - check if this was optional
+			if (phase.isOptional()) {
+				nextPhase();
+				process_incoming(message);
+				return;
 			}
+			System.out.println("Expected " + phase.expected);
+			this.end();
 		}
+	}
+
+	private CallPhase getCurrentPhase() {
+		return this.phases.get(this.phaseIndex);
+	}
+
+	private void nextPhase() {
+		this.phaseIndex += 1;
 	}
 
 	InetSocketAddress getRemoteAddress() throws IOException {

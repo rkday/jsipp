@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 
 import uk.me.rkd.jsipp.runtime.Call;
+import uk.me.rkd.jsipp.runtime.parsers.DatagramMessageParser;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
-import uk.me.rkd.jsipp.runtime.parsers.StreamMessageParser;
 
 public class UDPMultiplexingSocketManager extends MultiplexingSocketManager {
 
@@ -15,6 +15,6 @@ public class UDPMultiplexingSocketManager extends MultiplexingSocketManager {
 
 	@Override
 	public SIPpMessageParser createParser(SelectableChannel chan, Call call) {
-		return new StreamMessageParser(new SocketListener(chan, this), 4096);
+		return new DatagramMessageParser(new SocketListener(chan, this));
 	}
 }

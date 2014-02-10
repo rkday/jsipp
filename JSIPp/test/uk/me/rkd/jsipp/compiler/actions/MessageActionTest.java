@@ -1,6 +1,6 @@
 package uk.me.rkd.jsipp.compiler.actions;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.zip.DataFormatException;
@@ -15,12 +15,13 @@ import uk.me.rkd.jsipp.compiler.XMLHelper;
 
 public class MessageActionTest {
 	@Test
-	public void testRegexpActionCreation() throws ParserConfigurationException, SAXException, IOException, DataFormatException {
+	public void testRegexpActionCreation() throws ParserConfigurationException, SAXException, IOException,
+	        DataFormatException {
 		Node action = XMLHelper.parseXMLSnippet("<action><ereg /></action>");
-		assertTrue(MessageAction.fromActionNode(action) instanceof RegexpAction);
+		assertNull(MessageAction.fromActionNode(action));
 	}
 
-	@Test(expected=DataFormatException.class)
+	@Test(expected = DataFormatException.class)
 	public void testInvalidAction() throws ParserConfigurationException, SAXException, IOException, DataFormatException {
 		Node action = XMLHelper.parseXMLSnippet("<action><goldfish /></action>");
 		MessageAction.fromActionNode(action);

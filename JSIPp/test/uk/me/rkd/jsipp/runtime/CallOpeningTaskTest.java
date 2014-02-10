@@ -28,6 +28,8 @@ public class CallOpeningTaskTest {
 		Thread.sleep(50);
 		verify(sm, atLeastOnce()).add(Matchers.any(Call.class));
 		task.stop();
+		CallOpeningTask.reset();
+		sched.stop();
 	}
 
 }

@@ -8,7 +8,6 @@ import java.nio.channels.SelectableChannel;
 public abstract class NetworkProtocolHandler {
 
 	public NetworkProtocolHandler() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public abstract void write(SelectableChannel chan, ByteBuffer buf) throws IOException;
