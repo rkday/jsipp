@@ -29,12 +29,15 @@ public abstract class MultiplexingSocketManager extends SocketManager {
 	}
 
 	private void createSockets(int numSockets) throws IOException {
+		System.out.println("In createSockets");
 		for (int i = 0; i < numSockets; i++) {
+			System.out.println("Creating socket");
 			SelectableChannel chan = nethandler.newChan();
 			nethandler.connect(chan, this.defaultTarget);
 			chan.configureBlocking(false);
 			this.channels.add(chan);
 			this.readerThread.newCallQueue.add(new CallAndChan(null, chan));
+			selector.wakeup();
 		}
 	}
 

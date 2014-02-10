@@ -1,6 +1,7 @@
 package uk.me.rkd.jsipp;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -33,17 +34,22 @@ public class JSIPpMain {
 	        InterruptedException, ParseException {
 		CommandLineParser parser = new BasicParser();
 		CommandLine cmd = parser.parse(Configuration.createOptions(), argv);
-		if (cmd.hasOption("h") || (cmd.getArgList().size() != 1)) {
+		if (cmd.hasOption("h")) {
 			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", Configuration.createOptions());
 			return;
 		}
 		Configuration cfg = Configuration.createFromOptions(cmd);
 		Scenario scenario = Scenario.fromXMLFilename(cfg.getScenarioFile());
+		if (scenario.isUac() && (cmd.getArgList().size() != 1)) {
+			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", Configuration.createOptions());
+			return;
+		}
 		Scheduler sched = new Scheduler(50);
 		Map<String, String> globalVariables = new HashMap<String, String>();
 		globalVariables.put("service", "sipp");
 		globalVariables.put("pid", UUID.randomUUID().toString());
 		SocketManager sm;
+
 		if (cfg.getTransport().equals("un")) {
 			sm = new UDPMultiSocketManager(cfg.getRemoteHost(), cfg.getRemotePort());
 			globalVariables.put("transport", "UDP");
@@ -61,9 +67,20 @@ public class JSIPpMain {
 			globalVariables.put("transport", "UDP");
 		}
 
-		CallOpeningTask opentask = new CallOpeningTask(scenario, sm, cfg.getRate(), globalVariables);
+		if (scenario.isUas()) {
+			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 0);
+			InetSocketAddress bindAddr = new InetSocketAddress(cfg.getListenIP(), cfg.getListenPort());
+			sm.setListener(bindAddr);
+		}
 
-		sched.add(opentask, 10);
+		CallOpeningTask opentask = CallOpeningTask.getInstance(scenario, sm, cfg.getRate(), sched.getTimer(),
+		                                                       globalVariables);
+		sm.start();
+
+		if (scenario.isUac()) {
+			sched.add(opentask, 10);
+		}
+
 		Thread.sleep(5 * 60 * 1000);
 
 		opentask.stop();

@@ -23,7 +23,7 @@ public class CallOpeningTaskTest {
 		SocketManager sm = mock(SocketManager.class);
 		Scenario s = Scenario.fromXMLFilename("resources/message-uas.xml");
 		Scheduler sched = new Scheduler(1);
-		CallOpeningTask task = new CallOpeningTask(s, sm, 100, new HashMap<String, String>());
+		CallOpeningTask task = CallOpeningTask.getInstance(s, sm, 100, sched.getTimer(), new HashMap<String, String>());
 		sched.add(task, 0);
 		Thread.sleep(50);
 		verify(sm, atLeastOnce()).add(Matchers.any(Call.class));

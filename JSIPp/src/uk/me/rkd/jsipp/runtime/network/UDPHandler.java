@@ -18,13 +18,19 @@ public class UDPHandler extends NetworkProtocolHandler {
 	}
 
 	@Override
-	public void read(SelectableChannel chan, ByteBuffer buf) throws IOException {
-		((DatagramChannel) chan).read(buf);
+	public int read(SelectableChannel chan, ByteBuffer buf) throws IOException {
+		((DatagramChannel) chan).receive(buf);
+		return buf.position();
 	}
 
 	@Override
 	public void connect(SelectableChannel chan, SocketAddress addr) throws IOException {
 		((DatagramChannel) chan).connect(addr);
+	}
+
+	@Override
+	public void close(SelectableChannel chan) throws IOException {
+		((DatagramChannel) chan).close();
 	}
 
 	@Override
@@ -40,5 +46,12 @@ public class UDPHandler extends NetworkProtocolHandler {
 	@Override
 	public SelectableChannel newChan() throws IOException {
 		return DatagramChannel.open();
+	}
+
+	@Override
+	public SelectableChannel newListener(SocketAddress bindAddr) throws IOException {
+		DatagramChannel chan = DatagramChannel.open();
+		chan.bind(bindAddr);
+		return chan;
 	}
 }

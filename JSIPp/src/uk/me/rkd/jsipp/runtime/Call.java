@@ -105,9 +105,10 @@ public class Call implements TimerTask {
 		this.sm.add(this);
 	}
 
-	public Call(int callNum, List<CallPhase> phases, SocketManager sm, Map<String, String> globalVariables) {
+	public Call(int callNum, String callId, List<CallPhase> phases, SocketManager sm,
+	            Map<String, String> globalVariables) {
 		this.callNumber = callNum;
-		this.callId = Integer.toString(callNum);
+		this.callId = callId;
 		this.variables.put("call_number", Integer.toString(callNum));
 		this.variables.put("call_id", this.callId);
 		this.phases = phases;

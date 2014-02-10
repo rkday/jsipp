@@ -13,11 +13,15 @@ public abstract class NetworkProtocolHandler {
 
 	public abstract void write(SelectableChannel chan, ByteBuffer buf) throws IOException;
 
-	public abstract void read(SelectableChannel chan, ByteBuffer buf) throws IOException;
+	public abstract int read(SelectableChannel chan, ByteBuffer buf) throws IOException;
 
 	public abstract void connect(SelectableChannel chan, SocketAddress addr) throws IOException;
 
+	public abstract void close(SelectableChannel chan) throws IOException;
+
 	public abstract SelectableChannel newChan() throws IOException;
+
+	public abstract SelectableChannel newListener(SocketAddress bindAddr) throws IOException;
 
 	public abstract SocketAddress getLocalAddress(SelectableChannel chan) throws IOException;
 

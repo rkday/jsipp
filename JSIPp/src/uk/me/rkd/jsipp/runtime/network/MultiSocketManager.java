@@ -88,6 +88,7 @@ public abstract class MultiSocketManager extends SocketManager {
 			System.out.println("IOException");
 			// TODO Auto-generated catch block
 		}
+		nethandler.close(chan);
 		this.readerThread.deadKeyQueue.add(chan.keyFor(selector));
 		selector.wakeup();
 		// System.out.println("Socket removed");

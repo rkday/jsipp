@@ -1,6 +1,6 @@
 package uk.me.rkd.jsipp.compiler;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -27,14 +27,15 @@ public class ScenarioTest {
 	public void testWhitespace() throws ParserConfigurationException, SAXException, IOException {
 		String xml = "<scenario><send>MESSAGE sip:example.com SIP/2.0</send><recv response='200' /></scenario>";
 		String wsxml = "<scenario>      \n\n<send>\n   \nMESSAGE sip:example.com SIP/2.0</send>\n\n  <recv response='200' /></scenario>";
-		Scenario.fromXMLDocument(XMLHelper.parseXML(wsxml));
+		Scenario scenario = Scenario.fromXMLDocument(XMLHelper.parseXML(wsxml));
+		assertTrue(scenario.isUac());
 	}
 
-	
 	@Test
 	public void testRegexpRequest() throws ParserConfigurationException, SAXException, IOException {
 		String xml = "<scenario><recv request='INVITE|NOTIFY' regexp='true'/><send>SIP/2.0 200 OK</send></scenario>";
-		Scenario.fromXMLDocument(XMLHelper.parseXML(xml));
+		Scenario scenario = Scenario.fromXMLDocument(XMLHelper.parseXML(xml));
+		assertTrue(scenario.isUas());
 	}
 
 	@Test

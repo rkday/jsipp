@@ -28,20 +28,39 @@ import uk.me.rkd.jsipp.compiler.phases.SendPhase;
  */
 public class Scenario {
 	private final List<CallPhase> actions;
+	private boolean uac = false;
 
 	private Scenario(List<CallPhase> a) {
 		this.actions = a;
+		for (CallPhase action : actions) {
+			if (action instanceof SendPhase) {
+				this.uac = true;
+				break;
+			} else if (action instanceof RecvPhase) {
+				this.uac = false;
+				break;
+			}
+		}
+	}
+
+	public boolean isUac() {
+		return this.uac;
+	}
+
+	public boolean isUas() {
+		return !this.uac;
 	}
 
 	/**
-	 * @return The list of call phases (SendPhase, RecvPhase, PausePhase) calls
-	 *         made using this scenario should go through.
+	 * @return The list of call phases (SendPhase, RecvPhase, PausePhase) calls made using this scenario should go
+	 *         through.
 	 */
 	public List<CallPhase> phases() {
 		return Collections.unmodifiableList(this.actions);
 	}
 
-	public static Scenario fromXMLFilename(String filename) throws ParserConfigurationException, SAXException, IOException {
+	public static Scenario fromXMLFilename(String filename) throws ParserConfigurationException, SAXException,
+	        IOException {
 		File fXmlFile = new File(filename);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		dbFactory.setValidating(true);
@@ -57,9 +76,10 @@ public class Scenario {
 		Document doc = dBuilder.parse(fXmlFile);
 		return Scenario.fromXMLDocument(doc);
 	}
-	
+
 	/**
-	 * @param doc An XML DOM document containing a SIPp scenario definition.
+	 * @param doc
+	 *            An XML DOM document containing a SIPp scenario definition.
 	 * @return A Scenario object based on the XML file.
 	 */
 	public static Scenario fromXMLDocument(Document doc) {

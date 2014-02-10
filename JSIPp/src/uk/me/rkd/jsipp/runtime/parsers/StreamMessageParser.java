@@ -190,6 +190,7 @@ public class StreamMessageParser extends uk.me.rkd.jsipp.runtime.parsers.SIPpMes
 
 	@Override
 	public synchronized void addBytes(byte[] bytes) throws IOException {
+		System.out.println("Parsing stream...");
 		currentStreamEnded = false;
 		ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 		readStream(inputStream);

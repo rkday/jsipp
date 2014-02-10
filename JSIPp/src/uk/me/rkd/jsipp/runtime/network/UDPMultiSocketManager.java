@@ -1,6 +1,7 @@
 package uk.me.rkd.jsipp.runtime.network;
 
 import java.io.IOException;
+import java.nio.channels.SelectableChannel;
 
 import uk.me.rkd.jsipp.runtime.Call;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
@@ -14,8 +15,8 @@ public class UDPMultiSocketManager extends MultiSocketManager {
 	}
 
 	@Override
-	public SIPpMessageParser createParser(Call call) {
-		return new StreamMessageParser(new PerSocketListener(call), 4060);
+	public SIPpMessageParser createParser(SelectableChannel chan, Call call) {
+		return new StreamMessageParser(new PerSocketListener(chan, call), 4060);
 	}
 
 }
