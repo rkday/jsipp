@@ -7,7 +7,7 @@ import uk.me.rkd.jsipp.runtime.Call;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
 import uk.me.rkd.jsipp.runtime.parsers.StreamMessageParser;
 
-public class TCPMultiplexingSocketManager extends MultiplexingSocketManager {
+public class TCPMultiplexingSocketManager extends SocketManager {
 
 	public TCPMultiplexingSocketManager(String defaultHost, int defaultPort, int numSockets) throws IOException {
 		super(defaultHost, defaultPort, new TCPHandler(), numSockets);

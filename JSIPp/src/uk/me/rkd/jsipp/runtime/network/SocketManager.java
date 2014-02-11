@@ -10,7 +10,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -18,18 +22,77 @@ import uk.me.rkd.jsipp.runtime.Call;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
 
 public abstract class SocketManager {
+
 	Selector selector;
 	SelectorThread readerThread;
 	SocketAddress defaultTarget;
 	NetworkProtocolHandler nethandler;
+	Map<Integer, SelectableChannel> callNumToSocket;
+	Map<String, Call> callIdToCall;
+	private List<SelectableChannel> channels;
 
-	public SocketManager(String defaultHost, int defaultPort, NetworkProtocolHandler nethandler) throws IOException {
+	public SocketManager(String defaultHost, int defaultPort, NetworkProtocolHandler nethandler, int numSockets)
+	                                                                                                            throws IOException {
 		if (defaultHost != null) {
 			this.defaultTarget = new InetSocketAddress(defaultHost, defaultPort);
 		}
 		this.selector = Selector.open();
 		this.readerThread = new SelectorThread();
 		this.nethandler = nethandler;
+		this.callIdToCall = new HashMap<String, Call>();
+		this.callNumToSocket = new HashMap<Integer, SelectableChannel>();
+		this.channels = new ArrayList<SelectableChannel>();
+		createSockets(numSockets);
+	}
+
+	private void createSockets(int numSockets) throws IOException {
+		System.out.println("In createSockets");
+		for (int i = 0; i < numSockets; i++) {
+			System.out.println("Creating socket");
+			SelectableChannel chan = nethandler.newChan();
+			nethandler.connect(chan, this.defaultTarget);
+			chan.configureBlocking(false);
+			this.channels.add(chan);
+			this.readerThread.newCallQueue.add(new CallAndChan(null, chan));
+			selector.wakeup();
+		}
+	}
+
+	public void stop() throws IOException {
+		this.readerThread.interrupt();
+		this.selector.wakeup();
+	}
+
+	public SocketAddress getdest(Integer callNumber) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		return nethandler.getRemoteAddress(chan);
+	}
+
+	public SocketAddress getaddr(Integer callNumber) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		return nethandler.getLocalAddress(chan);
+	}
+
+	public void setdest(Integer callNumber, String host, int port) throws IOException {
+		// TODO Auto-generated method stub
+	}
+
+	public void send(Integer callNumber, String message) throws IOException {
+		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		ByteBuffer buf = ByteBuffer.wrap(message.getBytes());
+		nethandler.write(chan, buf);
+	}
+
+	public void add(Call call) throws IOException {
+		int idx = call.getNumber() % this.channels.size();
+		SelectableChannel chan = this.channels.get(idx);
+		this.callNumToSocket.put(call.getNumber(), chan);
+		this.callIdToCall.put(call.getCallId(), call);
+	}
+
+	public void remove(Call call) throws IOException {
+		this.callNumToSocket.remove(call.getNumber());
+		this.callIdToCall.remove(call.getCallId());
 	}
 
 	class CallAndChan {
@@ -59,7 +122,6 @@ public abstract class SocketManager {
 	}
 
 	protected class SelectorThread extends Thread {
-		public Queue<SelectionKey> deadKeyQueue = new ConcurrentLinkedQueue<SelectionKey>();
 		public Queue<CallAndChan> newCallQueue = new ConcurrentLinkedQueue<CallAndChan>();
 
 		public void run() {
@@ -99,11 +161,6 @@ public abstract class SocketManager {
 						// from it.
 					}
 				}
-
-				while (!this.deadKeyQueue.isEmpty()) {
-					SelectionKey key = this.deadKeyQueue.poll();
-					key.cancel();
-				}
 			}
 		}
 
@@ -142,20 +199,6 @@ public abstract class SocketManager {
 			}
 		}
 	}
-
-	public abstract void setdest(Integer callNumber, String host, int port) throws IOException;
-
-	public abstract SocketAddress getdest(Integer callNumber) throws IOException;
-
-	public abstract SocketAddress getaddr(Integer callNumber) throws IOException;
-
-	public abstract void send(Integer callNumber, String message) throws IOException;
-
-	public abstract void add(Call call) throws IOException;
-
-	public abstract void remove(Call call) throws IOException;
-
-	public abstract void stop() throws IOException;
 
 	protected abstract SIPpMessageParser createParser(SelectableChannel chan, Call call);
 

@@ -7,7 +7,7 @@ import uk.me.rkd.jsipp.runtime.Call;
 import uk.me.rkd.jsipp.runtime.parsers.DatagramMessageParser;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
 
-public class UDPMultiplexingSocketManager extends MultiplexingSocketManager {
+public class UDPMultiplexingSocketManager extends SocketManager {
 
 	public UDPMultiplexingSocketManager(String defaultHost, int defaultPort, int numChannels) throws IOException {
 		super(defaultHost, defaultPort, new UDPHandler(), numChannels);

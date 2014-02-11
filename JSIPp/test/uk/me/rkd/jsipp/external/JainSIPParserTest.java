@@ -39,6 +39,7 @@ public class JainSIPParserTest {
 
 		public SIPMessage msg;
 		public boolean error = false;
+		public boolean keepalive = false;
 		public String err = "";
 
 		@Override
@@ -59,9 +60,7 @@ public class JainSIPParserTest {
 
 		@Override
 		public void sendSingleCLRF() throws Exception {
-			throw new ParseException("bad", 0);
-			// TODO Auto-generated method stub
-
+			this.keepalive = true;
 		}
 
 	}
@@ -115,4 +114,13 @@ public class JainSIPParserTest {
 		             r.getHeaderAsFormattedString("Contact").trim());
 	}
 
+	@Test
+	public void testPing() throws Exception {
+		TestHandler h = new TestHandler();
+		StreamMessageParser p = new StreamMessageParser(h, 4096);
+		assertFalse(h.keepalive);
+		p.addBytes("\r\n\r\n".getBytes());
+		assertFalse(h.error);
+		assertTrue(h.keepalive);
+	}
 }

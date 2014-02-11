@@ -44,7 +44,7 @@ public class IntegrationCallTest {
 		Call call = new Call(8, "uac1", uacScenario.phases(), uacSM, new HashMap<String, String>());
 		call.registerSocket();
 		sched.getTimer().newTimeout(call, 10, TimeUnit.MILLISECONDS);
-		Thread.sleep(3000);
+		Thread.sleep(500);
 		assertTrue(call.hasCompleted());
 		opentask.stop();
 		CallOpeningTask.reset();

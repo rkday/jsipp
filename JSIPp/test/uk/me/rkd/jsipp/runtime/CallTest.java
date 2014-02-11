@@ -91,10 +91,10 @@ public class CallTest {
 		Scenario s = Scenario.fromXMLFilename("resources/message.xml");
 		Call c = new Call(3, "3", s.phases(), sm, new HashMap<String, String>());
 		sched.add(c, 0);
-		Thread.sleep(400);
+		Thread.sleep(200);
 		verify(sm).send(eq(3), anyString());
 		c.process_incoming(p.parseSIPMessage(resp.getBytes(), true, true, null));
-		Thread.sleep(400);
+		Thread.sleep(200);
 		assertTrue(c.hasCompleted());
 		verify(sm).remove(c);
 		sched.stop();

@@ -14,18 +14,13 @@ class SocketListener implements SIPMessageListener {
 	/**
 	 * 
 	 */
-	private MultiplexingSocketManager multiplexingSocketManager;
+	private SocketManager multiplexingSocketManager;
 	private SelectableChannel chan;
 
-	public SocketListener(SelectableChannel chan, MultiplexingSocketManager multiplexingSocketManager) {
+	public SocketListener(SelectableChannel chan, SocketManager multiplexingSocketManager) {
 		super();
 		this.multiplexingSocketManager = multiplexingSocketManager;
 		this.chan = chan;
-	}
-
-	public SocketListener(MultiplexingSocketManager multiplexingSocketManager, SelectableChannel chan) {
-		super();
-		this.multiplexingSocketManager = multiplexingSocketManager;
 	}
 
 	@Override
