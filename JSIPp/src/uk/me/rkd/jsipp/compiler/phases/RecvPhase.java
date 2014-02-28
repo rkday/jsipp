@@ -18,7 +18,8 @@ public class RecvPhase extends CallPhase {
 	public final boolean optional;
 	public final int timeout;
 
-	public RecvPhase(Node xmlnode) {
+	public RecvPhase(Node xmlnode, int idx) {
+		this.idx = idx;
 		NamedNodeMap attr = xmlnode.getAttributes();
 		Node expected_response = attr.getNamedItem("response");
 		Node expected_request = attr.getNamedItem("request");

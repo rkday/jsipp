@@ -22,10 +22,9 @@ public class CallOpeningTask implements TimerTask {
 	private Map<String, String> globalVariables;
 	private static CallOpeningTask INSTANCE;
 
-	public static CallOpeningTask getInstance(Scenario scenario, SocketManager socketManager, double rate, Timer timer,
-	                                          Map<String, String> globalVariables) {
+	public static CallOpeningTask getInstance(Scenario scenario, SocketManager socketManager, double rate, Timer timer) {
 		if (INSTANCE == null) {
-			INSTANCE = new CallOpeningTask(scenario, socketManager, rate, timer, globalVariables);
+			INSTANCE = new CallOpeningTask(scenario, socketManager, rate, timer);
 		}
 		return INSTANCE;
 	}
@@ -38,13 +37,11 @@ public class CallOpeningTask implements TimerTask {
 		INSTANCE = null;
 	}
 
-	private CallOpeningTask(Scenario scenario, SocketManager socketManager, double rate, Timer timer,
-	                        Map<String, String> globalVariables) {
+	private CallOpeningTask(Scenario scenario, SocketManager socketManager, double rate, Timer timer) {
 		this.scenario = scenario;
 		this.start = System.currentTimeMillis();
 		this.socketManager = socketManager;
 		this.rate = rate;
-		this.globalVariables = globalVariables;
 		this.handle = timer;
 		// TODO Auto-generated constructor stub
 	}
@@ -67,7 +64,7 @@ public class CallOpeningTask implements TimerTask {
 			timeout.timer().newTimeout(this, (long) msPerCall, TimeUnit.MILLISECONDS);
 			for (int i = 0; i < callstoStart; i++) {
 				Call call = new Call(this.callNum, Integer.toString(this.callNum), this.scenario.phases(),
-				        this.socketManager, this.globalVariables);
+				        this.socketManager);
 				call.registerSocket();
 				timeout.timer().newTimeout(call, 10, TimeUnit.MILLISECONDS);
 				this.callNum += 1;
@@ -78,7 +75,7 @@ public class CallOpeningTask implements TimerTask {
 	}
 
 	public synchronized Call newUAS(String callId) {
-		Call call = new Call(this.callNum, callId, this.scenario.phases(), this.socketManager, this.globalVariables);
+		Call call = new Call(this.callNum, callId, this.scenario.phases(), this.socketManager);
 		this.handle.newTimeout(call, 10, TimeUnit.MILLISECONDS);
 		this.callNum += 1;
 		return call;

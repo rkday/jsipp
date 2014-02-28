@@ -8,15 +8,15 @@ import io.netty.util.TimerTask;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import uk.me.rkd.jsipp.compiler.SimpleVariableTable;
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
+import uk.me.rkd.jsipp.runtime.Statistics.StatType;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
 
@@ -39,22 +39,12 @@ public class Call implements TimerTask {
 	private long timeoutEnds = NO_TIMEOUT;
 	private Timer timer;
 	private SIPMessage lastMessage;
-	private VariablesList variables = new VariablesList();
-	private Map<String, String> globalVariables;
+	private CallVariables variables;
 
-	public class VariablesList {
+	public class CallVariables extends SimpleVariableTable {
 
-		private Map<String, String> callVariables = new HashMap<String, String>();
-
-		void put(String k, String v) {
-			callVariables.put(k, v);
-		}
-
-		void remove(String k) {
-			callVariables.remove(k);
-		}
-
-		String get(String name) {
+		@Override
+		public String get(String name) {
 			try {
 				if (name.equals("local_port")) {
 					return Integer.toString(getLocalAddress().getPort());
@@ -79,12 +69,14 @@ public class Call implements TimerTask {
 				return null;
 			}
 
-			if (callVariables.containsKey(name)) {
-				return callVariables.get(name);
+			if (vars.containsKey(name)) {
+				return vars.get(name);
 			}
 
-			if (globalVariables.containsKey(name)) {
-				return globalVariables.get(name);
+			String global = SimpleVariableTable.global().get(name);
+
+			if (global != null) {
+				return global;
 			}
 
 			if (name.startsWith("last_") && lastMessage != null) {
@@ -100,19 +92,29 @@ public class Call implements TimerTask {
 		this.sm.add(this);
 	}
 
-	public Call(int callNum, String callId, List<CallPhase> phases, SocketManager sm,
-	            Map<String, String> globalVariables) {
+	public Call(int callNum, String callId, List<CallPhase> phases, SocketManager sm) {
+		this.variables = new CallVariables();
 		this.callNumber = callNum;
 		this.callId = callId;
-		this.variables.put("call_number", Integer.toString(callNum));
-		this.variables.put("call_id", this.callId);
+		this.variables.putKeyword("call_number", Integer.toString(callNum));
+		this.variables.putKeyword("call_id", this.callId);
 		this.phases = phases;
 		this.sm = sm;
-		this.globalVariables = globalVariables;
 		System.out.println("Call " + Integer.toString(callNum) + " created");
 	}
 
-	public void end() {
+	private void success() {
+		System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
+		Statistics.INSTANCE.report(StatType.CALL_SUCCESS, this.callId);
+		end();
+	}
+
+	private void fail() {
+		Statistics.INSTANCE.report(StatType.CALL_FAILED, this.callId);
+		end();
+	}
+
+	private void end() {
 		try {
 			this.sm.remove(this);
 		} catch (IOException e) {
@@ -133,8 +135,7 @@ public class Call implements TimerTask {
 	public synchronized void run(Timeout timeout) {
 		System.out.println(String.format("Call %d, phase %d", this.getNumber(), this.phaseIndex));
 		if (hasCompleted()) {
-			System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
-			this.end();
+			this.success();
 		} else {
 			CallPhase currentPhase = getCurrentPhase();
 			this.timer = timeout.timer();
@@ -146,8 +147,9 @@ public class Call implements TimerTask {
 				}
 				long untilTimeout = this.timeoutEnds - System.currentTimeMillis();
 				if (untilTimeout < 0) {
+					Statistics.INSTANCE.report(StatType.RECV_TIMED_OUT, Integer.toString(currentPhase.idx));
 					System.out.println("Call timed out");
-					this.end();
+					this.fail();
 				} else {
 					// We haven't timed out yet - reschedule ourselves to run when we will time out
 					reschedule(untilTimeout);
@@ -164,20 +166,21 @@ public class Call implements TimerTask {
 	private void send() {
 		SendPhase currentPhase = (SendPhase) getCurrentPhase();
 		System.out.println("Sending");
-		this.variables.put("branch", "z9hG4bK" + UUID.randomUUID().toString());
+		this.variables.putKeyword("branch", "z9hG4bK" + UUID.randomUUID().toString());
 		try {
 			// Do a first pass of keyword replacement, so we can calculate the body length
 			String message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
 			int len = SIPpMessageParser.getBodyLength(message);
-			this.variables.put("len", Integer.toString(len));
+			this.variables.putKeyword("len", Integer.toString(len));
 
 			// Do a second pass now that we know the value of [len]
 			message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
 			this.sm.send(this.callNumber, message);
+			Statistics.INSTANCE.report(StatType.MSG_SENT, Integer.toString(currentPhase.idx));
 		} catch (Exception e) {
 			System.out.println("Send failed");
 			e.printStackTrace();
-			this.end();
+			this.fail();
 		}
 	}
 
@@ -191,6 +194,7 @@ public class Call implements TimerTask {
 
 		CallPhase phase = getCurrentPhase();
 		if (phase.expected(message)) {
+			Statistics.INSTANCE.report(StatType.MSG_RECVD, Integer.toString(phase.idx));
 			System.out.println("Call " + Integer.toString(getNumber()) + " received " + phase.expected);
 			nextPhase();
 			reschedule(0);
@@ -201,8 +205,9 @@ public class Call implements TimerTask {
 				process_incoming(message);
 				return;
 			}
+			Statistics.INSTANCE.report(StatType.UNEXPECTED_MSG_RECVD, Integer.toString(phase.idx));
 			System.out.println("Expected " + phase.expected);
-			this.end();
+			this.fail();
 		}
 	}
 

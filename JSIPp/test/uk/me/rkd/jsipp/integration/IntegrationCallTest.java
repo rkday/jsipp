@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -35,13 +34,12 @@ public class IntegrationCallTest {
 
 		SocketManager uacSM = new TCPMultiplexingSocketManager("127.0.0.1", 15060, 1);
 
-		CallOpeningTask opentask = CallOpeningTask.getInstance(uasScenario, uasSM, 0, sched.getTimer(),
-		                                                       new HashMap<String, String>());
+		CallOpeningTask opentask = CallOpeningTask.getInstance(uasScenario, uasSM, 0, sched.getTimer());
 
 		uasSM.start();
 		uacSM.start();
 
-		Call call = new Call(8, "uac1", uacScenario.phases(), uacSM, new HashMap<String, String>());
+		Call call = new Call(8, "uac1", uacScenario.phases(), uacSM);
 		call.registerSocket();
 		sched.getTimer().newTimeout(call, 10, TimeUnit.MILLISECONDS);
 		Thread.sleep(500);

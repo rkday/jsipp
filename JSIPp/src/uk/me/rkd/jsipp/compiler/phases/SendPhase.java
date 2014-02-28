@@ -11,7 +11,8 @@ public class SendPhase extends CallPhase {
 	public final String message;
 	public static final Pattern initialSpaces = Pattern.compile("^\\s*");
 
-	public SendPhase(Node xmlnode) {
+	public SendPhase(Node xmlnode, int idx) {
+		this.idx = idx;
 		this.expected = "<<SENDING>>";
 		String raw_message = xmlnode.getFirstChild().getTextContent();
 		this.message = this.stripWhitespace(raw_message);

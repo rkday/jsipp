@@ -21,6 +21,7 @@ import org.xml.sax.SAXException;
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
+import uk.me.rkd.jsipp.runtime.Statistics;
 
 /**
  * @author robertday
@@ -29,6 +30,20 @@ import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 public class Scenario {
 	private final List<CallPhase> actions;
 	private boolean uac = false;
+
+	private String forZMQ() {
+		StringBuilder sb = new StringBuilder();
+		for (CallPhase action : actions) {
+			if (action instanceof SendPhase) {
+				sb.append("OUT:");
+			} else if (action instanceof RecvPhase) {
+				sb.append("IN:");
+			}
+			sb.append(action.expected);
+			sb.append(":");
+		}
+		return sb.toString();
+	}
 
 	private Scenario(List<CallPhase> a) {
 		this.actions = a;
@@ -41,6 +56,7 @@ public class Scenario {
 				break;
 			}
 		}
+		Statistics.INSTANCE.scenarioDesc = this.forZMQ();
 	}
 
 	public boolean isUac() {
@@ -85,13 +101,16 @@ public class Scenario {
 	public static Scenario fromXMLDocument(Document doc) {
 		Element scenario = doc.getDocumentElement();
 		List<CallPhase> actions = new ArrayList<CallPhase>();
+		int idx = 0;
 		for (Node m = scenario.getFirstChild(); m != null; m = m.getNextSibling()) {
 			if (m.getNodeName() == "#text") {
 				// ignore whitespace elements
 			} else if (m.getNodeName() == "recv") {
-				actions.add(new RecvPhase(m));
+				actions.add(new RecvPhase(m, idx));
+				idx += 1;
 			} else if (m.getNodeName() == "send") {
-				actions.add(new SendPhase(m));
+				actions.add(new SendPhase(m, idx));
+				idx += 1;
 			}
 		}
 		return new Scenario(actions);
