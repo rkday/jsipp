@@ -28,7 +28,15 @@ public class Statistics {
 
 			while (true) {
 				String message = rep.recvStr();
-				rep.send(scenarioDesc);
+				if (message.equals("get rate")) {
+					rep.send(String.format("%f", CallOpeningTask.getInstance().getRate()));
+				} else if (message.startsWith("set rate ")) {
+					double rate = Double.parseDouble(message.substring(9));
+					CallOpeningTask.getInstance().setRate(rate);
+					rep.send("OK");
+				} else {
+					rep.send(scenarioDesc);
+				}
 			}
 		}
 	}

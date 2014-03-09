@@ -46,6 +46,14 @@ public class CallOpeningTask implements TimerTask {
 		// TODO Auto-generated constructor stub
 	}
 
+	public synchronized void setRate(double rate) {
+		this.rate = rate;
+	}
+
+	public synchronized double getRate() {
+		return this.rate;
+	}
+
 	public synchronized void stop() {
 		this.finished = true;
 	}

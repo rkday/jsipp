@@ -60,6 +60,31 @@ public enum Configuration {
 
 	private int listenPort;
 
+	/**
+	 * @return the rate_increase
+	 */
+	public double getRateIncrease() {
+		return rateIncrease;
+	}
+
+	/**
+	 * @return the rate_increase_period
+	 */
+	public long getRateIncreasePeriod() {
+		return rateIncreasePeriod;
+	}
+
+	/**
+	 * @return the rate_max
+	 */
+	public double getRateMax() {
+		return rateMax;
+	}
+
+	private double rateIncrease;
+	private long rateIncreasePeriod;
+	private double rateMax;
+
 	public static Configuration createFromOptions(CommandLine cmd) {
 		String host = null;
 		int port = 5060;
@@ -77,6 +102,10 @@ public enum Configuration {
 		INSTANCE.scenarioFile = cmd.getOptionValue("sf");
 		INSTANCE.transport = cmd.getOptionValue("t", "un");
 		INSTANCE.rate = Double.parseDouble(cmd.getOptionValue("r", "1"));
+		INSTANCE.rateIncrease = Double.parseDouble(cmd.getOptionValue("rate_increase", "0"));
+		INSTANCE.rateIncreasePeriod = Integer.parseInt(cmd.getOptionValue("rate_increase_period", "60"));
+		INSTANCE.rateMax = Double.parseDouble(cmd.getOptionValue("rate_max", "100"));
+
 		INSTANCE.listenIP = cmd.getOptionValue("i", "0.0.0.0");
 		INSTANCE.listenPort = Integer.parseInt(cmd.getOptionValue("p", "5060"));
 
@@ -91,10 +120,17 @@ public enum Configuration {
 		Option transport = OptionBuilder.withArgName("transport").hasArg().withDescription("tn: one TCP socket per call\nun: one UDP socket per call\nt1: all calls multiplexed on one TCP socket\nu1: all calls multiplexed on one UDP socket").create("t");
 		Option listen_ip = OptionBuilder.withArgName("listen_ip").hasArg().withDescription("For UAS mode, the IP address to listen on").create("i");
 		Option listen_port = OptionBuilder.withArgName("listen_port").hasArg().withDescription("For UAS mode, the port to listen on (default 5060)").create("p");
+		Option rate_increase = OptionBuilder.withArgName("rate_increase").hasArg().withDescription("If rate should ramp up periodically, specify the number of calls/second it should increase by").create("rate_increase");
+		Option rate_increase_period = OptionBuilder.withArgName("rate_increase_period").hasArg().withDescription("If rate should ramp up periodically, specify the number of seconds between each step up").create("rate_increase_period");
+		Option rate_max = OptionBuilder.withArgName("rate_max").hasArg().withDescription("If rate should ramp up periodically, specify the maximum number of calls/second").create("rate_max");
 
 		opts.addOption(help);
 		opts.addOption(scenarioFile);
 		opts.addOption(rate);
+		opts.addOption(rate_increase);
+		opts.addOption(rate_increase_period);
+		opts.addOption(rate_max);
+
 		opts.addOption(transport);
 		opts.addOption(listen_ip);
 		opts.addOption(listen_port);

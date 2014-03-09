@@ -17,6 +17,7 @@ import uk.me.rkd.jsipp.compiler.Scenario;
 import uk.me.rkd.jsipp.compiler.SimpleVariableTable;
 import uk.me.rkd.jsipp.compiler.VariableTable;
 import uk.me.rkd.jsipp.runtime.CallOpeningTask;
+import uk.me.rkd.jsipp.runtime.RateIncreaseThread;
 import uk.me.rkd.jsipp.runtime.Scheduler;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
 import uk.me.rkd.jsipp.runtime.network.TCPMultiplexingSocketManager;
@@ -73,6 +74,12 @@ public class JSIPpMain {
 
 		CallOpeningTask opentask = CallOpeningTask.getInstance(scenario, sm, cfg.getRate(), sched.getTimer());
 		sm.start();
+
+		if (cfg.getRateIncrease() > 0) {
+			Thread rateIncrease = new RateIncreaseThread(cfg.getRateIncrease(), (1000 * cfg.getRateIncreasePeriod()),
+			        cfg.getRateMax());
+			rateIncrease.start();
+		}
 
 		if (scenario.isUac()) {
 			sched.add(opentask, 10);
