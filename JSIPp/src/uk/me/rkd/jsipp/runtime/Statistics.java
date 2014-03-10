@@ -1,5 +1,7 @@
 package uk.me.rkd.jsipp.runtime;
 
+import java.util.concurrent.ArrayBlockingQueue;
+
 import org.zeromq.ZMQ;
 
 public class Statistics {
@@ -8,6 +10,7 @@ public class Statistics {
 	private ZMQ.Socket publisher;
 	ZMQ.Context context;
 	public String scenarioDesc = "";
+	ArrayBlockingQueue<String> toPublish = new ArrayBlockingQueue<String>(1024);
 
 	public enum StatType {
 		CALL_SUCCESS, CALL_FAILED, MSG_RECVD, MSG_SENT, UNEXPECTED_MSG_RECVD, PAUSE_FINISHED, RECV_TIMED_OUT
@@ -16,9 +19,8 @@ public class Statistics {
 	private Statistics() {
 		context = ZMQ.context(1);
 
-		publisher = context.socket(ZMQ.PUB);
-		publisher.bind("tcp://*:5556");
 		new ReplyThread().start();
+		new PublisherThread().start();
 	}
 
 	private class ReplyThread extends Thread {
@@ -41,6 +43,22 @@ public class Statistics {
 		}
 	}
 
+	private class PublisherThread extends Thread {
+		public void run() {
+			publisher = context.socket(ZMQ.PUB);
+			publisher.bind("tcp://*:5556");
+			while (true) {
+				String msg;
+				try {
+					msg = Statistics.this.toPublish.take();
+					publisher.send(msg);
+				} catch (InterruptedException e) {
+					// Drop message
+				}
+			}
+		}
+	}
+
 	public void report(StatType statname, String... values) {
 		StringBuilder out = new StringBuilder(statname.toString());
 		for (String value : values) {
@@ -48,6 +66,10 @@ public class Statistics {
 			out.append(value);
 		}
 		System.out.println(out.toString());
-		publisher.send("SIPP-" + out.toString());
+		try {
+			toPublish.put("SIPP-" + out.toString());
+		} catch (InterruptedException e) {
+			// Do nothing
+		}
 	}
 }

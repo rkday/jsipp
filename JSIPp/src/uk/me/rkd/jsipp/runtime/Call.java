@@ -40,6 +40,7 @@ public class Call implements TimerTask {
 	private Timer timer;
 	private SIPMessage lastMessage;
 	private CallVariables variables;
+	private boolean alreadyFinished = false;
 
 	public class CallVariables extends SimpleVariableTable {
 
@@ -104,9 +105,11 @@ public class Call implements TimerTask {
 	}
 
 	private void success() {
-		System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
-		Statistics.INSTANCE.report(StatType.CALL_SUCCESS, this.callId);
-		end();
+		if (!alreadyFinished) {
+			System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
+			Statistics.INSTANCE.report(StatType.CALL_SUCCESS, this.callId);
+			end();
+		}
 	}
 
 	private void fail() {
@@ -115,6 +118,7 @@ public class Call implements TimerTask {
 	}
 
 	private void end() {
+		alreadyFinished = true;
 		try {
 			this.sm.remove(this);
 		} catch (IOException e) {
