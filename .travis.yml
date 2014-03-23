@@ -1,6 +1,6 @@
 language: java
 
-install: cd JSIPp && mvn clean && mvn install -DskipTests=true
+install: cd JSIPp && mvn install -DskipTests=true
 
 after_success:
   - mvn jacoco:report coveralls:jacoco -DsourceEncoding=UTF-8

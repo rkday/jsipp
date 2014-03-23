@@ -39,7 +39,7 @@ public class IntegrationCallTest {
 		uasSM.start();
 		uacSM.start();
 
-		Call call = new Call(8, "uac1", uacScenario.phases(), uacSM);
+		Call call = new Call(8, "uac1", uacScenario.phases(), uacSM, sched.getTimer());
 		call.registerSocket();
 		sched.getTimer().newTimeout(call, 10, TimeUnit.MILLISECONDS);
 		Thread.sleep(1000);
