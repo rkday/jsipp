@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import uk.me.rkd.jsipp.compiler.SimpleVariableTable;
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
+import uk.me.rkd.jsipp.compiler.phases.Pause;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 import uk.me.rkd.jsipp.runtime.Statistics.StatType;
@@ -41,6 +42,7 @@ public class Call implements TimerTask {
 	private SIPMessage lastMessage;
 	private CallVariables variables;
 	private boolean alreadyFinished = false;
+	private Timeout currentTimeout;
 
 	public class CallVariables extends SimpleVariableTable {
 
@@ -52,7 +54,6 @@ public class Call implements TimerTask {
 				} else if (name.equals("remote_port")) {
 					return Integer.toString(getRemoteAddress().getPort());
 				} else if (name.equals("local_ip")) {
-					System.out.println(getLocalAddress().getAddress().getHostAddress());
 					return getLocalAddress().getAddress().getHostAddress();
 				} else if (name.equals("remote_ip")) {
 					return getRemoteAddress().getAddress().getHostAddress();
@@ -93,7 +94,7 @@ public class Call implements TimerTask {
 		this.sm.add(this);
 	}
 
-	public Call(int callNum, String callId, List<CallPhase> phases, SocketManager sm) {
+	public Call(int callNum, String callId, List<CallPhase> phases, SocketManager sm, Timer t) {
 		this.variables = new CallVariables();
 		this.callNumber = callNum;
 		this.callId = callId;
@@ -101,12 +102,12 @@ public class Call implements TimerTask {
 		this.variables.putKeyword("call_id", this.callId);
 		this.phases = phases;
 		this.sm = sm;
-		System.out.println("Call " + Integer.toString(callNum) + " created");
+		this.timer = t;
+		Statistics.INSTANCE.report(StatType.CALL_BEGIN, this.callId);
 	}
 
 	private void success() {
 		if (!alreadyFinished) {
-			System.out.println("Call " + Integer.toString(this.getNumber()) + " terminating");
 			Statistics.INSTANCE.report(StatType.CALL_SUCCESS, this.callId);
 			end();
 		}
@@ -130,14 +131,16 @@ public class Call implements TimerTask {
 		return this.phaseIndex >= this.phases.size();
 	}
 
-	private void reschedule(long when) {
-		if (this.timer != null) {
-			this.timer.newTimeout(this, when, TimeUnit.MILLISECONDS);
+	public synchronized void reschedule(long when) {
+		if (this.currentTimeout != null) {
+			this.currentTimeout.cancel();
 		}
+		//System.out.println("Rescheduling for " + Long.toString(when) + " ms");
+		this.currentTimeout = this.timer.newTimeout(this, when, TimeUnit.MILLISECONDS);
 	}
 
 	public synchronized void run(Timeout timeout) {
-		System.out.println(String.format("Call %d, phase %d", this.getNumber(), this.phaseIndex));
+		//System.out.println(String.format("Call %d, phase %d", this.getNumber(), this.phaseIndex));
 		if (hasCompleted()) {
 			this.success();
 		} else {
@@ -152,8 +155,19 @@ public class Call implements TimerTask {
 				long untilTimeout = this.timeoutEnds - System.currentTimeMillis();
 				if (untilTimeout < 0) {
 					Statistics.INSTANCE.report(StatType.RECV_TIMED_OUT, Integer.toString(currentPhase.idx));
-					System.out.println("Call timed out");
 					this.fail();
+				} else {
+					// We haven't timed out yet - reschedule ourselves to run when we will time out
+					reschedule(untilTimeout);
+				}
+			} else if (currentPhase instanceof Pause) {
+				if (this.timeoutEnds == NO_TIMEOUT) {
+					this.timeoutEnds = ((Pause) currentPhase).getDuration() + System.currentTimeMillis();
+				}
+				long untilTimeout = this.timeoutEnds - System.currentTimeMillis();
+				if (untilTimeout < 0) {
+					nextPhase();
+					this.run(timeout);
 				} else {
 					// We haven't timed out yet - reschedule ourselves to run when we will time out
 					reschedule(untilTimeout);
@@ -169,7 +183,6 @@ public class Call implements TimerTask {
 
 	private void send() {
 		SendPhase currentPhase = (SendPhase) getCurrentPhase();
-		System.out.println("Sending");
 		this.variables.putKeyword("branch", "z9hG4bK" + UUID.randomUUID().toString());
 		try {
 			// Do a first pass of keyword replacement, so we can calculate the body length
@@ -178,6 +191,7 @@ public class Call implements TimerTask {
 			this.variables.putKeyword("len", Integer.toString(len));
 
 			// Do a second pass now that we know the value of [len]
+			assert (!this.hasCompleted());
 			message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
 			this.sm.send(this.callNumber, message);
 			Statistics.INSTANCE.report(StatType.MSG_SENT, Integer.toString(currentPhase.idx));
@@ -199,7 +213,6 @@ public class Call implements TimerTask {
 		CallPhase phase = getCurrentPhase();
 		if (phase.expected(message)) {
 			Statistics.INSTANCE.report(StatType.MSG_RECVD, Integer.toString(phase.idx));
-			System.out.println("Call " + Integer.toString(getNumber()) + " received " + phase.expected);
 			nextPhase();
 			reschedule(0);
 		} else {
@@ -220,6 +233,7 @@ public class Call implements TimerTask {
 	}
 
 	private void nextPhase() {
+		this.timeoutEnds = NO_TIMEOUT;
 		this.phaseIndex += 1;
 	}
 

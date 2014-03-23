@@ -19,6 +19,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
+import uk.me.rkd.jsipp.compiler.phases.Pause;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 import uk.me.rkd.jsipp.runtime.Statistics;
@@ -110,6 +111,9 @@ public class Scenario {
 				idx += 1;
 			} else if (m.getNodeName() == "send") {
 				actions.add(new SendPhase(m, idx));
+				idx += 1;
+			} else if (m.getNodeName() == "pause") {
+				actions.add(new Pause(m, idx));
 				idx += 1;
 			}
 		}

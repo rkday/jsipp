@@ -14,7 +14,6 @@ public class DatagramMessageParser extends SIPpMessageParser {
 
 	@Override
 	public void addBytes(byte[] bytes) throws IOException, ParseException {
-		System.out.println("Parsing...");
 		SIPMessage msg = this.smp.parseSIPMessage(bytes, true, false, this.sipMessageListener);
 		try {
 			this.sipMessageListener.processMessage(msg);

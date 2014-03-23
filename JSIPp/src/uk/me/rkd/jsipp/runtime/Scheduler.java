@@ -13,7 +13,7 @@ public class Scheduler {
 
 	public Scheduler(long milliseconds) {
 		this.timer = new HashedWheelTimer(milliseconds, TimeUnit.MILLISECONDS);
-		// TODO Auto-generated constructor stub
+		this.timer.start();
 	}
 
 	public Timer getTimer() {

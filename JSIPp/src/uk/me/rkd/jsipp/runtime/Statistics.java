@@ -13,7 +13,7 @@ public class Statistics {
 	ArrayBlockingQueue<String> toPublish = new ArrayBlockingQueue<String>(1024);
 
 	public enum StatType {
-		CALL_SUCCESS, CALL_FAILED, MSG_RECVD, MSG_SENT, UNEXPECTED_MSG_RECVD, PAUSE_FINISHED, RECV_TIMED_OUT
+		CALL_SUCCESS, CALL_FAILED, MSG_RECVD, MSG_SENT, UNEXPECTED_MSG_RECVD, PAUSE_FINISHED, RECV_TIMED_OUT, CALL_BEGIN
 	}
 
 	private Statistics() {
@@ -65,7 +65,7 @@ public class Statistics {
 			out.append(":");
 			out.append(value);
 		}
-		System.out.println(out.toString());
+		//System.out.println(out.toString());
 		try {
 			toPublish.put("SIPP-" + out.toString());
 		} catch (InterruptedException e) {

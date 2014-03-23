@@ -54,7 +54,6 @@ public abstract class SIPpMessageParser {
 		if (parts.length == 1) {
 			return 0;
 		}
-		System.out.println(parts[1]);
 		return parts[1].length();
 	}
 }

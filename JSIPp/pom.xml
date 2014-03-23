@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>JSIPp</groupId>
   <artifactId>JSIPp</artifactId>
-  <version>0.0.3-SNAPSHOT</version>
+  <version>0.0.3</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
@@ -44,6 +44,19 @@
             </goals>
 </execution>
 </executions>
+    </plugin>
+    <plugin>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <configuration>
+        <archive>
+          <manifest>
+            <mainClass>uk.me.rkd.jsipp.JSIPpMain</mainClass>
+          </manifest>
+        </archive>
+        <descriptorRefs>
+          <descriptorRef>jar-with-dependencies</descriptorRef>
+        </descriptorRefs>
+      </configuration>
     </plugin>
     </plugins>
   </build>

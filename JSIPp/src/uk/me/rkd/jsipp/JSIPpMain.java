@@ -33,11 +33,11 @@ public class JSIPpMain {
 	        InterruptedException, ParseException {
 		CommandLineParser parser = new BasicParser();
 		CommandLine cmd = parser.parse(Configuration.createOptions(), argv);
-		if (cmd.hasOption("h")) {
+		Configuration cfg = Configuration.createFromOptions(cmd);
+		if (cmd.hasOption("h") || (cfg.getScenarioFile() == null)) {
 			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", Configuration.createOptions());
 			return;
 		}
-		Configuration cfg = Configuration.createFromOptions(cmd);
 		Scenario scenario = Scenario.fromXMLFilename(cfg.getScenarioFile());
 		if (scenario.isUac() && (cmd.getArgList().size() != 1)) {
 			new HelpFormatter().printHelp("sipp.jar [OPTIONS] remotehost[:port]", Configuration.createOptions());

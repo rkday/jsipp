@@ -24,7 +24,7 @@ public class CallOpeningTaskTest {
 		Scheduler sched = new Scheduler(1);
 		CallOpeningTask task = CallOpeningTask.getInstance(s, sm, 100, sched.getTimer());
 		sched.add(task, 0);
-		Thread.sleep(50);
+		Thread.sleep(300);
 		verify(sm, atLeastOnce()).add(Matchers.any(Call.class));
 		task.stop();
 		CallOpeningTask.reset();

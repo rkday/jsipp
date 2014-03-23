@@ -79,6 +79,7 @@
   <!-- This delay can be customized by the -d command-line option       -->
   <!-- or by adding a 'milliseconds = "value"' option here.             -->
   <pause/>
+  <pause duration="1000"/>
 
   <!-- The 'crlf' option inserts a blank line in the statistics report. -->
   <send retrans="500">
@@ -87,7 +88,7 @@
       BYE sip:[service]@[remote_ip]:[remote_port] SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: sipp <sip:sipp@[local_ip]:[local_port]>;tag=[pid]SIPpTag00[call_number]
-      To: [service] <sip:[service]@[remote_ip]:[remote_port]>[peer_tag_param]
+      To: [service] <sip:[service]@[remote_ip]:[remote_port]>
       Call-ID: [call_id]
       CSeq: 2 BYE
       Contact: sip:sipp@[local_ip]:[local_port]

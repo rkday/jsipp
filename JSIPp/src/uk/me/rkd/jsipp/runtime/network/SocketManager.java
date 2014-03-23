@@ -46,9 +46,7 @@ public abstract class SocketManager {
 	}
 
 	private void createSockets(int numSockets) throws IOException {
-		System.out.println("In createSockets");
 		for (int i = 0; i < numSockets; i++) {
-			System.out.println("Creating socket");
 			SelectableChannel chan = nethandler.newChan();
 			nethandler.connect(chan, this.defaultTarget);
 			chan.configureBlocking(false);
@@ -65,6 +63,7 @@ public abstract class SocketManager {
 
 	public SocketAddress getdest(Integer callNumber) throws IOException {
 		SelectableChannel chan = this.callNumToSocket.get(callNumber);
+		assert(chan != null);
 		return nethandler.getRemoteAddress(chan);
 	}
 
@@ -85,7 +84,8 @@ public abstract class SocketManager {
 
 	public void add(Call call) throws IOException {
 		int idx = call.getNumber() % this.channels.size();
-		SelectableChannel chan = this.channels.get(idx);
+		SelectableChannel chan = this.channels.get(idx); 
+		assert(chan != null);
 		this.callNumToSocket.put(call.getNumber(), chan);
 		this.callIdToCall.put(call.getCallId(), call);
 	}
@@ -181,16 +181,12 @@ public abstract class SocketManager {
 			SIPpMessageParser parser = (SIPpMessageParser) key.attachment();
 			ByteBuffer dst = ByteBuffer.allocate(2048);
 			try {
-				System.out.println("Reading from channel...");
 				int result = nethandler.read(chan, dst);
 				if (result == -1) {
-					System.out.println("Closing channel...");
 					nethandler.close(chan);
 					key.cancel();
 				} else {
-					System.out.println("Read from channel...");
 					parser.addBytes(dst.array());
-					System.out.println("Parsed...");
 				}
 			} catch (IOException | ParseException e) {
 				e.printStackTrace();
