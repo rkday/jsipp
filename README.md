@@ -17,14 +17,16 @@ Also, one of the main issues with SIPp was the lack of good unit test support - 
 
 ## What's the status?
 
-Version 0.0.1 has all the basic infrastructure (scheduler thread, selector thread, call opening, message send/receive) but no logging, UI, stats, in-call actions, or most keywords (only [call_num] and [call_id] are implemented).
+https://github.com/rkday/jsipp/wiki/Current-Status has a full overview.
 
-It can do basic "send a SIP MESSAGE, receive a 200 OK" - a working file is in `resources/message.xml`.
+## How can I use it?
 
-It's usable with `java -jar jsipp-0.0.1.jar -sf message.xml -r <rate per second> <server>:<port>`.
+It's usable with `java -jar jsipp-0.0.4.jar -sf message.xml -r <rate per second> <server>:<port>`.
+
+To see the results, an ncurses UI and a web UI are available - see https://github.com/rkday/jsipp/wiki/ZeroMQ#sample-programs.
 
 ## How can I contribute?
 
-See the [design notes](https://github.com/rkday/jsipp/blob/master/design.md) for an overview, and [the SIPp docs](http://sipp.sourceforge.net/doc/reference.html) for a list of the function that needs to be ported over. In particular, more keywords would be great, as would more in-call actions, CSV file injection and maybe 3PCC - I'm planning to focus my own efforts on transport protocols, SIP parsing and media early on, rather than tackling those areas. 
+See the [design notes](https://github.com/rkday/jsipp/blob/master/design.md) for an overview, and [the SIPp docs](http://sipp.sourceforge.net/doc/reference.html) for a list of the function that needs to be ported over. In particular, more keywords would be great, as would more in-call actions, CSV file injection and maybe 3PCC - I'm planning to focus my own efforts on transport protocols, SIP parsing and media early on, rather than tackling those areas.
 
 Feedback on the [planned future directions](https://github.com/rkday/jsipp/blob/master/future-directions.md) would also be useful, especially if there are use-cases it doesn't cover.
