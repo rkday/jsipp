@@ -33,7 +33,6 @@ class SocketListener implements SIPMessageListener {
 		String callId = msg.getCallId().getCallId();
 		Call call = this.multiplexingSocketManager.callIdToCall.get(callId);
 		if (call == null) {
-			System.out.println("No call found withj Call-ID " + callId + ", creating new one");
 			call = CallOpeningTask.getInstance().newUAS(callId);
 			this.multiplexingSocketManager.callIdToCall.put(callId, call);
 			this.multiplexingSocketManager.callNumToSocket.put(call.getNumber(), this.chan);

@@ -39,7 +39,11 @@ In the future it will have other responsibilities:
 * Monitoring the main TCP socket for connection requests and accepting them
 * Multiplexing a large number of calls onto fewer sockets - including fairly determining which socket a call should be tied to. Multiplexing all the calls onto one socket (like the -t u1 option) is just a specific case of this function.
 
-#### Call opener (CallOpenerTask.java)
+#### Statistics
+
+The Statistics instance manages the ZMQ threads (for statistics publishing and control sockets). It exposes an interface through which Call objects can send a set of values and have them published over ZeroMQ, while obeying the rule that each ZMQ socket should be managed by only one thread.
+
+#### Call opener (CallOpeningTask.java)
 
 ##### UAC
 
@@ -48,6 +52,10 @@ In UAC mode, the call opener runs as a scheduled task. Each time it runs, it cal
 ##### UAS
 
 When UAS calls are implemented, the call opener will not run as a scheduled task - instead, the socket manager will alert the call opener whenever it receives a new message that can't be correlated to an existing call.
+
+##### Rate increase thread
+
+The rate increase thread runs separately - if the -rate_increase parameter is specified, it is responsible for increasing the rate of the call opener untilit reaches the maximum.
 
 #### Calls (Call.java, CallPhase.java, MessageAction.java)
 

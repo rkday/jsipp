@@ -9,5 +9,7 @@ public abstract class CallPhase {
 	public abstract boolean expected(SIPMessage msg);
 
 	public abstract boolean isOptional();
+	
+	public abstract String forZMQ();
 
 }

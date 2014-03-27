@@ -1,11 +1,17 @@
 package uk.me.rkd.jsipp.compiler.phases;
 
+import gov.nist.javax.sip.header.StatusLine;
 import gov.nist.javax.sip.message.SIPMessage;
+import gov.nist.javax.sip.parser.RequestLineParser;
+import gov.nist.javax.sip.parser.StatusLineParser;
 
+import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.w3c.dom.Node;
+
+import uk.me.rkd.jsipp.runtime.parsers.SipUtils;
 
 public class SendPhase extends CallPhase {
 	public final String message;
@@ -78,5 +84,12 @@ public class SendPhase extends CallPhase {
 	@Override
 	public boolean isOptional() {
 		return false;
+	}
+	
+
+
+	@Override
+	public String forZMQ() {
+		return "OUT:"+ SipUtils.methodOrStatusCode(message.split("\r?\n", 0)[0]);
 	}
 }

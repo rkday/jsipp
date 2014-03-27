@@ -34,4 +34,9 @@ public class Pause extends CallPhase {
 		return duration;
 	}
 
+	@Override
+	public String forZMQ() {
+		return ("PAUSE:" + Long.toString(this.duration));
+	}
+
 }

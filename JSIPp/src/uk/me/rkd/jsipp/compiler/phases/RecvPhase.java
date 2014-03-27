@@ -73,4 +73,9 @@ public class RecvPhase extends CallPhase {
 		return this.optional;
 	}
 
+	@Override
+	public String forZMQ() {
+		return "IN:" + this.expected;
+	}
+
 }

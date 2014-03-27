@@ -9,6 +9,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import uk.me.rkd.jsipp.testutils.XMLHelper;
+
+
 public class ScenarioTest {
 
 	@Test

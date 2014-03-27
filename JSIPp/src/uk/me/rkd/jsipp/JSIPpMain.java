@@ -49,27 +49,27 @@ public class JSIPpMain {
 		globalVariables.putKeyword("pid", UUID.randomUUID().toString());
 		SocketManager sm;
 
-		if (cfg.getTransport().equals("un")) {
-			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 4096);
-			globalVariables.putKeyword("transport", "UDP");
-		} else if (cfg.getTransport().equals("tn")) {
-			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 4096);
-			globalVariables.putKeyword("transport", "TCP");
-		} else if (cfg.getTransport().equals("t1")) {
-			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
-			globalVariables.putKeyword("transport", "TCP");
-		} else if (cfg.getTransport().equals("u1")) {
-			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
-			globalVariables.putKeyword("transport", "UDP");
-		} else {
-			sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 4096);
-			globalVariables.putKeyword("transport", "UDP");
-		}
-
 		if (scenario.isUas()) {
 			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 0);
 			InetSocketAddress bindAddr = new InetSocketAddress(cfg.getListenIP(), cfg.getListenPort());
 			sm.setListener(bindAddr);
+		} else {
+			if (cfg.getTransport().equals("un")) {
+				sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 512);
+				globalVariables.putKeyword("transport", "UDP");
+			} else if (cfg.getTransport().equals("tn")) {
+				sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 512);
+				globalVariables.putKeyword("transport", "TCP");
+			} else if (cfg.getTransport().equals("t1")) {
+				sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
+				globalVariables.putKeyword("transport", "TCP");
+			} else if (cfg.getTransport().equals("u1")) {
+				sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 1);
+				globalVariables.putKeyword("transport", "UDP");
+			} else {
+				sm = new UDPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 512);
+				globalVariables.putKeyword("transport", "UDP");
+			}
 		}
 
 		CallOpeningTask opentask = CallOpeningTask.getInstance(scenario, sm, cfg.getRate(), sched.getTimer());
@@ -84,8 +84,12 @@ public class JSIPpMain {
 		if (scenario.isUac()) {
 			sched.add(opentask, 10);
 		}
-
-		Thread.sleep(5 * 60 * 1000);
+		
+		System.out.print("Type 'quit to exit:");
+		String input = "";
+		while (!input.startsWith("quit")) {
+			input = System.console().readLine();
+		}
 
 		opentask.stop();
 
@@ -94,6 +98,5 @@ public class JSIPpMain {
 
 		sm.stop();
 		sched.stop();
-		System.out.println("fin");
 	}
 }

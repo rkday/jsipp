@@ -16,11 +16,11 @@ class MinuteLongBuffer
   def initialize
     @values = []
   end
-  
+
   def add v
     @values << [Time.new.to_f, v]
   end
-  
+
   def count
     @values = @values.keep_if {|v| v[0] > (Time.new.to_f - 1)}
     @values.length
@@ -31,42 +31,45 @@ class Scenario
   def parse_scenario_desc desc
     @strings = []
     @msg_counts = []
-    parts = desc.split(":")
-    parts.each_slice(2) do |inout, name|
-      if inout == "IN"
-        @strings << (POSITIONS3 % [name, IN_ARROW])
-      else
-        @strings << (POSITIONS3 % [name, OUT_ARROW])
+    parts = desc.split(";")
+    parts.each do |part|
+      type, value = part.split(":")
+      if type == "IN"
+        @strings << (POSITIONS3 % [value, IN_ARROW])
+      elsif type == "OUT"
+        @strings << (POSITIONS3 % [value, OUT_ARROW])
+      elsif type == "PAUSE"
+        @strings << (POSITIONS3 % [(PAUSE % value), ""])
       end
       @msg_counts << 0
       @unexpected_msg_counts << 0
       @timeout_counts << 0
     end
   end
-  
+
   def inc_msg idx
     @msg_counts[idx.to_i] += 1
     if idx.to_i == 0
       @new_calls.add 1
     end
   end
-  
+
   def inc_unexpected idx
     @unexpected_msg_counts[idx.to_i] += 1
   end
-  
+
   def inc_timeout idx
     @timeout_counts[idx.to_i] += 1
   end
-  
+
   def update
     Curses.clear
     Curses.addstr(POSITIONS % ["Call-rate", "Length", "Port", "Total-time", "Total-calls", "Remote-host"])
-    Curses.addstr(POSITIONS % [("%dcps" % @new_calls.count), "0 ms", "5061", ("%.2fs" % (Time.new.to_f - @start)), "40", "127.0.0.1:5060 (UDP)"])
+    Curses.addstr(POSITIONS % [("?cps"), "? ms", "????", ("%.2fs" % (Time.new.to_f - @start)), "?", "??? (???)"])
     Curses.addstr("\n")
-    Curses.addstr(POSITIONS2 % ["10 new calls during 1.000s period", "16ms scheduler resolution"])
-    Curses.addstr(POSITIONS2 % ["0 concurrent calls (limit 30)", "Peak was 1 calls, after 0s"])
-    Curses.addstr(POSITIONS2 % ["0 out-of-call msg (discarded)", "1 open sockets"])
+    Curses.addstr(POSITIONS2 % ["%d new calls during 1.000s period" % @new_calls.count, "?ms scheduler resolution"])
+    Curses.addstr(POSITIONS2 % ["? concurrent calls (limit ?)", "Peak was ? calls, after ?s"])
+    Curses.addstr(POSITIONS2 % ["? out-of-call msg (discarded)", "? open sockets"])
     Curses.addstr("\n")
     Curses.addstr((POSITIONS3 % ["", "",]) % ["Messages", "Retrans", "Timeout", "Unexpected-Msg"])
     @strings.each_with_index do |s, i|
@@ -74,7 +77,7 @@ class Scenario
     end
     Curses.refresh
   end
-  
+
   def initialize
     @new_calls = MinuteLongBuffer.new
     @strings = []
@@ -82,7 +85,7 @@ class Scenario
     @unexpected_msg_counts = []
     @timeout_counts = []
     @start = Time.new.to_f
-    
+
     Thread.new do
       context = ZMQ::Context.new
       socket = context.socket(ZMQ::SUB)
@@ -97,8 +100,8 @@ class Scenario
       loop do
         socket.recv_strings(msgs = [])
         msgs.each do |msg|
-        name, idx = msg.split(":")
-        if name == "SIPP-MSG_RECVD" or name == "SIPP-MSG_SENT"
+        name, ts, scenario, callnum, callid, idx, result = msg.split(":")
+        if name == "SIPP-PHASE_SUCCESS"
           inc_msg idx
         end
         if name == "SIPP-UNEXPECTED_MSG_RECVD"
@@ -110,7 +113,7 @@ class Scenario
       end
       end
     end
-  end   
+  end
 end
 
 SCENARIO = Scenario.new

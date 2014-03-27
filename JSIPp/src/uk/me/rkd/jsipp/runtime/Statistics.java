@@ -13,7 +13,7 @@ public class Statistics {
 	ArrayBlockingQueue<String> toPublish = new ArrayBlockingQueue<String>(1024);
 
 	public enum StatType {
-		CALL_SUCCESS, CALL_FAILED, MSG_RECVD, MSG_SENT, UNEXPECTED_MSG_RECVD, PAUSE_FINISHED, RECV_TIMED_OUT, CALL_BEGIN
+		CALL_SUCCESS, CALL_FAILURE, PHASE_SUCCESS, UNEXPECTED_MSG_RECVD, RECV_TIMED_OUT, CALL_BEGIN
 	}
 
 	private Statistics() {

@@ -20,6 +20,7 @@ import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 import uk.me.rkd.jsipp.runtime.Statistics.StatType;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
+import uk.me.rkd.jsipp.runtime.parsers.SipUtils;
 
 public class Call implements TimerTask {
 
@@ -43,6 +44,7 @@ public class Call implements TimerTask {
 	private CallVariables variables;
 	private boolean alreadyFinished = false;
 	private Timeout currentTimeout;
+	private String scenarioName;
 
 	public class CallVariables extends SimpleVariableTable {
 
@@ -90,31 +92,48 @@ public class Call implements TimerTask {
 
 	}
 
+	private void publishStat(StatType type, boolean include_idx) {
+		publishStat(type, include_idx, false);
+	}
+	
+	private void publishStat(StatType type, boolean include_idx, boolean receiving) {
+		String timestamp = Double.toString(System.currentTimeMillis() % 1000.0);
+		if (include_idx && receiving) {
+			String identifier = SipUtils.methodOrStatusCode(this.lastMessage.getFirstLine());
+			Statistics.INSTANCE.report(type, timestamp, this.scenarioName, Integer.toString(this.callNumber), this.callId, Integer.toString(this.phaseIndex), identifier);
+		} else if (include_idx) {
+			Statistics.INSTANCE.report(type, timestamp, this.scenarioName, Integer.toString(this.callNumber), this.callId, Integer.toString(this.phaseIndex));
+		} else {
+			Statistics.INSTANCE.report(type, timestamp, this.scenarioName, Integer.toString(this.callNumber), this.callId);
+		}
+	}
+
 	public void registerSocket() throws IOException {
 		this.sm.add(this);
 	}
 
-	public Call(int callNum, String callId, List<CallPhase> phases, SocketManager sm, Timer t) {
+	public Call(int callNum, String callId, String scenarioname, List<CallPhase> phases, SocketManager sm, Timer t) {
 		this.variables = new CallVariables();
 		this.callNumber = callNum;
 		this.callId = callId;
+		this.scenarioName = scenarioname;
 		this.variables.putKeyword("call_number", Integer.toString(callNum));
 		this.variables.putKeyword("call_id", this.callId);
 		this.phases = phases;
 		this.sm = sm;
 		this.timer = t;
-		Statistics.INSTANCE.report(StatType.CALL_BEGIN, this.callId);
+		publishStat(StatType.CALL_BEGIN, false);
 	}
 
 	private void success() {
 		if (!alreadyFinished) {
-			Statistics.INSTANCE.report(StatType.CALL_SUCCESS, this.callId);
+			publishStat(StatType.CALL_SUCCESS, false);
 			end();
 		}
 	}
 
 	private void fail() {
-		Statistics.INSTANCE.report(StatType.CALL_FAILED, this.callId);
+		publishStat(StatType.CALL_FAILURE, false);
 		end();
 	}
 
@@ -154,7 +173,7 @@ public class Call implements TimerTask {
 				}
 				long untilTimeout = this.timeoutEnds - System.currentTimeMillis();
 				if (untilTimeout < 0) {
-					Statistics.INSTANCE.report(StatType.RECV_TIMED_OUT, Integer.toString(currentPhase.idx));
+					publishStat(StatType.RECV_TIMED_OUT, true);
 					this.fail();
 				} else {
 					// We haven't timed out yet - reschedule ourselves to run when we will time out
@@ -166,6 +185,7 @@ public class Call implements TimerTask {
 				}
 				long untilTimeout = this.timeoutEnds - System.currentTimeMillis();
 				if (untilTimeout < 0) {
+					publishStat(StatType.PHASE_SUCCESS, true);
 					nextPhase();
 					this.run(timeout);
 				} else {
@@ -194,7 +214,7 @@ public class Call implements TimerTask {
 			assert (!this.hasCompleted());
 			message = KeywordReplacer.replaceKeywords(currentPhase.message, this.variables, false);
 			this.sm.send(this.callNumber, message);
-			Statistics.INSTANCE.report(StatType.MSG_SENT, Integer.toString(currentPhase.idx));
+			publishStat(StatType.PHASE_SUCCESS, true);
 		} catch (Exception e) {
 			System.out.println("Send failed");
 			e.printStackTrace();
@@ -212,7 +232,7 @@ public class Call implements TimerTask {
 
 		CallPhase phase = getCurrentPhase();
 		if (phase.expected(message)) {
-			Statistics.INSTANCE.report(StatType.MSG_RECVD, Integer.toString(phase.idx));
+			publishStat(StatType.PHASE_SUCCESS, true, true);
 			nextPhase();
 			reschedule(0);
 		} else {
@@ -222,7 +242,7 @@ public class Call implements TimerTask {
 				process_incoming(message);
 				return;
 			}
-			Statistics.INSTANCE.report(StatType.UNEXPECTED_MSG_RECVD, Integer.toString(phase.idx));
+			publishStat(StatType.UNEXPECTED_MSG_RECVD, true, true);
 			System.out.println("Expected " + phase.expected);
 			this.fail();
 		}

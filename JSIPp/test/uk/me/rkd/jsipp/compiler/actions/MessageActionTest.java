@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import uk.me.rkd.jsipp.compiler.XMLHelper;
+import uk.me.rkd.jsipp.testutils.XMLHelper;
 
 public class MessageActionTest {
 	@Test

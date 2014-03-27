@@ -60,7 +60,7 @@ public class CallTest {
 		SocketManager sm = mock(SocketManager.class);
 		Scenario s = Scenario.fromXMLFilename("resources/message-uas.xml");
 		Scheduler sched = new Scheduler(1);
-		Call c = new Call(1, "1", s.phases(), sm, sched.getTimer());
+		Call c = new Call(1, "1", "Test Scenario", s.phases(), sm, sched.getTimer());
 		c.registerSocket();
 		sched.add(c, 0);
 		c.process_incoming(p.parseSIPMessage(message_req.getBytes(), true, true, null));
@@ -77,7 +77,7 @@ public class CallTest {
 		SocketManager sm = mock(SocketManager.class);
 		Scheduler sched = new Scheduler(1);
 		Scenario s = Scenario.fromXMLFilename("resources/message-uas.xml");
-		Call c = new Call(2, "2", s.phases(), sm, sched.getTimer());
+		Call c = new Call(2, "2", "Test Scenario", s.phases(), sm, sched.getTimer());
 		c.registerSocket();
 		c.process_incoming(p.parseSIPMessage(req.getBytes(), true, true, null));
 		verify(sm).remove(c);
@@ -89,7 +89,7 @@ public class CallTest {
 		SocketManager sm = mock(SocketManager.class);
 		Scheduler sched = new Scheduler(1);
 		Scenario s = Scenario.fromXMLFilename("resources/message.xml");
-		Call c = new Call(3, "3", s.phases(), sm, sched.getTimer());
+		Call c = new Call(3, "3", "Test Scenario", s.phases(), sm, sched.getTimer());
 		sched.add(c, 0);
 		Thread.sleep(200);
 		verify(sm).send(eq(3), anyString());
@@ -106,7 +106,7 @@ public class CallTest {
 		SocketManager sm = mock(SocketManager.class);
 		Scheduler sched = new Scheduler(1);
 		Scenario s = Scenario.fromXMLFilename("resources/message-optional.xml");
-		Call c = new Call(3, "3", s.phases(), sm, sched.getTimer());
+		Call c = new Call(3, "3", "Test Scenario", s.phases(), sm, sched.getTimer());
 		sched.add(c, 0);
 		Thread.sleep(200);
 		verify(sm).send(eq(3), anyString());
@@ -123,7 +123,7 @@ public class CallTest {
 		SocketManager sm = mock(SocketManager.class);
 		Scheduler sched = new Scheduler(1);
 		Scenario s = Scenario.fromXMLFilename("resources/message-optional.xml");
-		Call c = new Call(3, "3", s.phases(), sm, sched.getTimer());
+		Call c = new Call(3, "3", "Test Scenario", s.phases(), sm, sched.getTimer());
 		sched.add(c, 0);
 		Thread.sleep(200);
 		verify(sm).send(eq(3), anyString());

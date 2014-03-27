@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>JSIPp</groupId>
   <artifactId>JSIPp</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>

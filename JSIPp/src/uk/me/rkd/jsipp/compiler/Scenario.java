@@ -15,6 +15,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -31,23 +32,23 @@ import uk.me.rkd.jsipp.runtime.Statistics;
 public class Scenario {
 	private final List<CallPhase> actions;
 	private boolean uac = false;
+	private String name;
 
 	private String forZMQ() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("NAME:");
+		sb.append(this.getName());
+		sb.append(";");
 		for (CallPhase action : actions) {
-			if (action instanceof SendPhase) {
-				sb.append("OUT:");
-			} else if (action instanceof RecvPhase) {
-				sb.append("IN:");
-			}
-			sb.append(action.expected);
-			sb.append(":");
+			sb.append(action.forZMQ());
+			sb.append(";");
 		}
 		return sb.toString();
 	}
 
-	private Scenario(List<CallPhase> a) {
+	private Scenario(String name, List<CallPhase> a) {
 		this.actions = a;
+		this.name = name;
 		for (CallPhase action : actions) {
 			if (action instanceof SendPhase) {
 				this.uac = true;
@@ -101,6 +102,13 @@ public class Scenario {
 	 */
 	public static Scenario fromXMLDocument(Document doc) {
 		Element scenario = doc.getDocumentElement();
+		NamedNodeMap attr = scenario.getAttributes();
+		Node nameattr = attr.getNamedItem("duration");
+		String name = "Unnamed Scenario";
+		if (nameattr != null) {
+			// TODO - verify that the name doesn't contain special characters
+			name = nameattr.getTextContent();
+		}
 		List<CallPhase> actions = new ArrayList<CallPhase>();
 		int idx = 0;
 		for (Node m = scenario.getFirstChild(); m != null; m = m.getNextSibling()) {
@@ -117,6 +125,10 @@ public class Scenario {
 				idx += 1;
 			}
 		}
-		return new Scenario(actions);
+		return new Scenario(name, actions);
+	}
+
+	public String getName() {
+		return this.name;
 	}
 }

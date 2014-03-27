@@ -8,19 +8,9 @@ It would be useful in future to support SIP over WebSockets, so SIPp could be us
 
 One of SIPp's weaknesses has been that it only correlates messages to a scenario based on the Call-ID. This made it very difficult to do things like register and then receive an INVITE - because the REGISTER message would have one Call-ID, but the incoming INVITE would have an entirely different Call-ID and SIPp would be unable to correlate it.
 
-The new version goes some way towards fixing that already - in the mode where there's one UDP socket per call, correlation is done purely based on the connection messages come in on, not on the Call-ID, so registering and then receiving an INVITE in the same scenario will work.
+It should be possible to solve this by having a secondary correlation on Request-URI - so that if an incoming INVITE doesn't match any known Call-IDs, the Request-URI is checked, and it's matched to the scenario using that Request-URI. This would require scenarios to indicate what Request-URI they're using, and use it correctly in their Contact headers, but that shouldn't be too arduous a requirement.
 
-However, this won't work when more than one call is multiplexed over a single connection, so won't fit all scenarios, and won't scale past about ~60,000 simultaneous calls per IP address (i.e. the number of ephemeral UDP ports available). It should be possible to solve this by having a secondary correlation on Request-URI - so that if an incoming INVITE doesn't match any known Call-IDs, the Request-URI is checked, and it's matched to the scenario using that Request-URI. This would require scenarios to indicate what Request-URI they're using, and use it correctly in their Contact headers, but that shouldn't be too arduous a requirement.
-
-## Statistics and framework integration
-
-When working on projects using SIPp, I've often had to integrate them into test frameworks that could set up and control the tests, then save off the results and display them as a graph. While controlling the tests was quite easy due to the "control socket" that SIPp provides, displaying the results was more difficult. It required dumping out SIPp's call statistics to a CSV file, then parsing that CSV file in real time and graphing the results. When tracking metrics outside what was provided by the stats file, it was even more difficult (for example, error codes analysis required turning on the -trace_err option and then parsing resonse codes out of a several-GB file) or impossible (such as doing analysis on actual response times, rather than the pre-processed response-time-durations that SIPp provides).
-
-SIPp's UI code is also quite tightly integrated - it's not easy to replace the ncurses UI with a web UI or a full GUI.
-
-To solve these problems, I plan to have the "core" of SIPp not doing any logging or UI work - instead, it will publish events (received messages, response times, successful calls, failed calls) over a ZeroMQ interface (ZeroMQ is a lightweight publish-subscribe framework designed for this sort of high-volume messaging). It will then be possible to have a UI that receives those ZeroMQ messages and uses them to update ncurses displays matching the existing UI, or to capture those messages and log them out to a file - but it's also possible to create a different UI, or to store all these events to a database for a permanent record of all tests, or to feed that data into a web interface.
-
-Another advantage is that UIs and collection frameworks don't need to be writtemn in the same language as SIPp - they can use any language that [supports ZeroMQ bindings](http://zeromq.org/bindings:_start).
+It would also be useful to allow a second registration scenario to be specified, with its own rate, and having jSIPp keep the two in sync (e.g. ensuring that registrations for a particular user defined in a CSV file always use the same TCP connection as calls for those registrations). This is only a partial solution to a more general problem (see the 'IMS Bench' section below for more) but will be easier to implement and will significantly simplify a common use-case.
 
 ## RTP
 

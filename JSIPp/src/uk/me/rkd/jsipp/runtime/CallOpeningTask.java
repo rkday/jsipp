@@ -75,7 +75,7 @@ public class CallOpeningTask implements TimerTask {
 			//System.out.println(callstoStart);
 			timeout.timer().newTimeout(this, (long) msPerCall, TimeUnit.MILLISECONDS);
 			for (int i = 0; i < callstoStart; i++) {
-				Call call = new Call(this.callNum, Integer.toString(this.callNum), this.scenario.phases(),
+				Call call = new Call(this.callNum, Integer.toString(this.callNum), this.scenario.getName(), this.scenario.phases(),
 				        this.socketManager, this.handle);
 				call.registerSocket();
 				call.reschedule(0);
@@ -88,7 +88,7 @@ public class CallOpeningTask implements TimerTask {
 	}
 
 	public synchronized Call newUAS(String callId) {
-		Call call = new Call(this.callNum, callId, this.scenario.phases(), this.socketManager, this.handle);
+		Call call = new Call(this.callNum, callId, this.scenario.getName(), this.scenario.phases(), this.socketManager, this.handle);
 		this.handle.newTimeout(call, 10, TimeUnit.MILLISECONDS);
 		this.callNum += 1;
 		return call;

@@ -39,7 +39,36 @@ public class IntegrationCallTest {
 		uasSM.start();
 		uacSM.start();
 
-		Call call = new Call(8, "uac1", uacScenario.phases(), uacSM, sched.getTimer());
+		Call call = new Call(8, "uac1", "Test Scenario", uacScenario.phases(), uacSM, sched.getTimer());
+		call.registerSocket();
+		sched.getTimer().newTimeout(call, 10, TimeUnit.MILLISECONDS);
+		Thread.sleep(1000);
+		assertTrue(call.hasCompleted());
+		opentask.stop();
+		CallOpeningTask.reset();
+		sched.stop();
+	}
+	
+	@Test
+	public void testIPv6() throws ParserConfigurationException, SAXException, IOException, InterruptedException {
+		Scheduler sched = new Scheduler(50);
+
+		Scenario uasScenario = Scenario.fromXMLFilename("resources/message-uas.xml");
+
+		Scenario uacScenario = Scenario.fromXMLFilename("resources/message.xml");
+
+		SocketManager uasSM = new TCPMultiplexingSocketManager(null, 0, 0);
+		InetSocketAddress bindAddr = new InetSocketAddress("::1", 15060);
+		uasSM.setListener(bindAddr);
+
+		SocketManager uacSM = new TCPMultiplexingSocketManager("::1", 15060, 1);
+
+		CallOpeningTask opentask = CallOpeningTask.getInstance(uasScenario, uasSM, 0, sched.getTimer());
+
+		uasSM.start();
+		uacSM.start();
+
+		Call call = new Call(8, "uac1", "Test Scenario", uacScenario.phases(), uacSM, sched.getTimer());
 		call.registerSocket();
 		sched.getTimer().newTimeout(call, 10, TimeUnit.MILLISECONDS);
 		Thread.sleep(1000);

@@ -1,4 +1,4 @@
-package uk.me.rkd.jsipp.compiler;
+package uk.me.rkd.jsipp.testutils;
 
 import java.io.IOException;
 import java.io.StringReader;
