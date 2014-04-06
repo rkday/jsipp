@@ -84,6 +84,7 @@ public enum Configuration {
 	private double rateIncrease;
 	private long rateIncreasePeriod;
 	private double rateMax;
+    private boolean rtpSink;
 
 	public static Configuration createFromOptions(CommandLine cmd) {
 		String host = null;
@@ -109,10 +110,16 @@ public enum Configuration {
 		INSTANCE.listenIP = cmd.getOptionValue("i", "0.0.0.0");
 		INSTANCE.listenPort = Integer.parseInt(cmd.getOptionValue("p", "5060"));
 
+		INSTANCE.rtpSink = cmd.hasOption("rtp_sink");
+
 		return INSTANCE;
 	}
 
-	public static Options createOptions() {
+	public boolean isRtpSink() {
+        return rtpSink;
+    }
+
+    public static Options createOptions() {
 		Options opts = new Options();
 		Option help = new Option("h", "display help text");
 		Option scenarioFile = OptionBuilder.withArgName("file").hasArg().withDescription("The XML file defining the SIPp scenario").create("sf");
@@ -123,6 +130,7 @@ public enum Configuration {
 		Option rate_increase = OptionBuilder.withArgName("rate_increase").hasArg().withDescription("If rate should ramp up periodically, specify the number of calls/second it should increase by").create("rate_increase");
 		Option rate_increase_period = OptionBuilder.withArgName("rate_increase_period").hasArg().withDescription("If rate should ramp up periodically, specify the number of seconds between each step up").create("rate_increase_period");
 		Option rate_max = OptionBuilder.withArgName("rate_max").hasArg().withDescription("If rate should ramp up periodically, specify the maximum number of calls/second").create("rate_max");
+        Option rtp_sink = OptionBuilder.withArgName("rtp_sink").withDescription("Open a socket to receive RTP for each call, and calculate jitter/packet loss stats").create("rtp_sink");
 
 		opts.addOption(help);
 		opts.addOption(scenarioFile);
@@ -134,6 +142,8 @@ public enum Configuration {
 		opts.addOption(transport);
 		opts.addOption(listen_ip);
 		opts.addOption(listen_port);
+		
+		opts.addOption(rtp_sink);
 		return opts;
 	}
 

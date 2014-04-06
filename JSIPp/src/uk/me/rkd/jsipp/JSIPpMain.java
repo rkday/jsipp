@@ -19,6 +19,7 @@ import uk.me.rkd.jsipp.compiler.VariableTable;
 import uk.me.rkd.jsipp.runtime.CallOpeningTask;
 import uk.me.rkd.jsipp.runtime.RateIncreaseThread;
 import uk.me.rkd.jsipp.runtime.Scheduler;
+import uk.me.rkd.jsipp.runtime.network.RTPSocketManager;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
 import uk.me.rkd.jsipp.runtime.network.TCPMultiplexingSocketManager;
 import uk.me.rkd.jsipp.runtime.network.UDPMultiplexingSocketManager;
@@ -48,6 +49,7 @@ public class JSIPpMain {
 		globalVariables.putKeyword("service", "sipp");
 		globalVariables.putKeyword("pid", UUID.randomUUID().toString());
 		SocketManager sm;
+		RTPSocketManager.INSTANCE.start();
 
 		if (scenario.isUas()) {
 			sm = new TCPMultiplexingSocketManager(cfg.getRemoteHost(), cfg.getRemotePort(), 0);

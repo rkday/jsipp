@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import uk.me.rkd.jsipp.Configuration;
 import uk.me.rkd.jsipp.compiler.SimpleVariableTable;
 import uk.me.rkd.jsipp.compiler.phases.CallPhase;
 import uk.me.rkd.jsipp.compiler.phases.Pause;
 import uk.me.rkd.jsipp.compiler.phases.RecvPhase;
 import uk.me.rkd.jsipp.compiler.phases.SendPhase;
 import uk.me.rkd.jsipp.runtime.Statistics.StatType;
+import uk.me.rkd.jsipp.runtime.network.RTPSocketManager;
 import uk.me.rkd.jsipp.runtime.network.SocketManager;
 import uk.me.rkd.jsipp.runtime.parsers.SIPpMessageParser;
 import uk.me.rkd.jsipp.runtime.parsers.SipUtils;
@@ -45,6 +47,7 @@ public class Call implements TimerTask {
 	private boolean alreadyFinished = false;
 	private Timeout currentTimeout;
 	private String scenarioName;
+	private int mediaPort = 0;
 
 	public class CallVariables extends SimpleVariableTable {
 
@@ -62,9 +65,9 @@ public class Call implements TimerTask {
 				} else if (name.equals("local_ip_type")) {
 					return (getLocalAddress().getAddress() instanceof Inet6Address) ? "6" : "4";
 				} else if (name.equals("media_ip")) {
-					return "0.0.0.0";
+					return "127.0.0.1";
 				} else if (name.equals("media_port")) {
-					return "0";
+					return Integer.toString(mediaPort);
 				} else if (name.equals("media_ip_type")) {
 					return "4";
 				}
@@ -122,6 +125,14 @@ public class Call implements TimerTask {
 		this.phases = phases;
 		this.sm = sm;
 		this.timer = t;
+		if (Configuration.INSTANCE.isRtpSink()) {
+		    try {
+		        this.mediaPort = RTPSocketManager.INSTANCE.add(callId);
+		    } catch (IOException e) {
+		        // TODO Auto-generated catch block
+		        e.printStackTrace();
+		    }
+		}
 		publishStat(StatType.CALL_BEGIN, false);
 	}
 
@@ -138,6 +149,9 @@ public class Call implements TimerTask {
 	}
 
 	private void end() {
+	    if (Configuration.INSTANCE.isRtpSink()) {
+	        RTPSocketManager.INSTANCE.remove(this.callId);
+	    }
 		alreadyFinished = true;
 		try {
 			this.sm.remove(this);
